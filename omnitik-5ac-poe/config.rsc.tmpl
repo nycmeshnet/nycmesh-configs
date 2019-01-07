@@ -1,5 +1,6 @@
 # NYC Mesh Mikrotik Omnitik config
 # Omnitik 5ac PoE
+# Version: {{version}}
 :global nodenumber {{nodenumber}}
 :global bgpasn {{bgpasn}}
 :global ipprefix {{ipprefix}}
@@ -35,8 +36,10 @@
 
 :beep frequency=600 length=100ms
 
+{{#poe}}
 /interface ethernet
 set [ find default-name=ether5 ] poe-out=forced-on
+{{/poe}}
 
 :beep frequency=700 length=100ms
 
