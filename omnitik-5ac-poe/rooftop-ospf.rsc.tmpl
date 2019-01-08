@@ -31,11 +31,6 @@
 
 :beep frequency=600 length=100ms
 
-/interface ethernet
-set [ find default-name=ether5 ] poe-out=forced-on
-
-:beep frequency=700 length=100ms
-
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     dynamic-keys name=nycmeshnet supplicant-identity=nycmesh \
