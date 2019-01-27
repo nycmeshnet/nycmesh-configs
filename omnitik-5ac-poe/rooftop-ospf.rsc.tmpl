@@ -56,7 +56,7 @@ add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default
 
 /ip address
 add address=($ipprefix . ".1/24") interface=local network=($ipprefix . ".0")
-add address=10.70.255.3/24 interface=mesh network=10.70.255.0
+add address={{meship}}/24 interface=mesh network=10.70.255.0
 
 :beep frequency=1000 length=100ms
 
