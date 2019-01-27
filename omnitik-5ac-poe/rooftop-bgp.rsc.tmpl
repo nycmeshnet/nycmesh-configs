@@ -3,12 +3,12 @@
 # Version: {{version}}
 :global nodenumber {{nodenumber}}
 :global bgpasn {{bgpasn}}
-:global ipprefix {{ipprefix}}
+:global ipprefix "{{ipprefix}}"
 :global iptenantsrange {{ipprefix}}.5-{{ipprefix}}.119
 :global iptenantsgw {{ipprefix}}.1
-:global ippublicrange  {{ipprefix}}.130-{{ipprefix}}.180
+:global ippublicrange {{ipprefix}}.130-{{ipprefix}}.180
 :global ippublicgw {{ipprefix}}.129
-:global dns {{dns}}
+:global dns 10.10.10.10
 
 /delay 15
 
@@ -35,13 +35,6 @@
 /ip address add address=192.168.88.1/24 interface=ether3 network=192.168.88.0
 
 :beep frequency=600 length=100ms
-
-{{#poe}}
-/interface ethernet
-set [ find default-name=ether5 ] poe-out=forced-on
-{{/poe}}
-
-:beep frequency=700 length=100ms
 
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
