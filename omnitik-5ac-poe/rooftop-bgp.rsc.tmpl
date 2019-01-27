@@ -2,12 +2,12 @@
 # Omnitik 5ac PoE
 :global nodenumber {{nodenumber}}
 :global bgpasn {{bgpasn}}
-:global ipprefix {{ipprefix}}
+:global ipprefix "{{ipprefix}}"
 :global iptenantsrange {{ipprefix}}.5-{{ipprefix}}.119
 :global iptenantsgw {{ipprefix}}.1
-:global ippublicrange  {{ipprefix}}.130-{{ipprefix}}.180
+:global ippublicrange {{ipprefix}}.130-{{ipprefix}}.180
 :global ippublicgw {{ipprefix}}.129
-:global dns {{dns}}
+:global dns 10.10.10.10
 
 /delay 15
 
