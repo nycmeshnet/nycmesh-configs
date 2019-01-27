@@ -69,9 +69,9 @@ add add-default-route=no disabled=yes interface=ether5 use-peer-dns=no use-peer-
 add bridge=local interface=ether1
 add bridge=local interface=ether2
 add bridge=local interface=ether3
-add bridge=local interface=ether4
 add bridge=local interface=wlan1
 add bridge=local interface=wlan2
+add bridge=mesh interface=ether4
 add bridge=mesh interface=ether5
 add bridge=mesh interface=all internal-path-cost=50 path-cost=50
 
@@ -93,7 +93,7 @@ add address=($ipprefix . ".0/24") dns-server=10.10.10.10 gateway=($ipprefix . ".
 :beep frequency=1500 length=100ms
 
 /routing ospf instance set [ find default=yes ] distribute-default=if-installed-as-type-1 router-id=($ipprefix . ".1") redistribute-connected=as-type-1
-/routing filter add chain=ospf=in set-bgp-communities=65000:110 set-distance=205
+/routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
 /routing ospf network add area=backbone network=10.70.255.0/24
 
