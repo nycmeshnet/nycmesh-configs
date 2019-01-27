@@ -20,9 +20,6 @@
 
 :beep frequency=500 length=100ms
 
-/system clock set time-zone-name=America/New_York
-/system identity set name=("nycmesh-" . $nodenumber . "-omni")
-
 :foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
 
 :beep frequency=600 length=100ms
@@ -33,10 +30,6 @@ add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
 
 /interface bridge settings
 set use-ip-firewall=yes
-
-/interface bridge filter
-add action=drop chain=forward in-bridge=mesh
-add action=drop chain=forward in-interface=wlan2
 
 :beep frequency=700 length=100ms
 
@@ -77,6 +70,12 @@ add bridge=mesh interface=all internal-path-cost=50 path-cost=50
 
 :beep frequency=1200 length=100ms
 
+/interface bridge filter
+add action=drop chain=forward in-bridge=mesh
+add action=drop chain=forward in-interface=wlan2
+
+:beep frequency=1200 length=100ms
+
 /ip pool
 add name=local ranges=$iptenantsrange
 
@@ -106,6 +105,9 @@ add action=accept chain=forward
 add action=accept chain=input
 
 :beep frequency=1700 length=100ms
+
+/system clock set time-zone-name=America/New_York
+/system identity set name=("nycmesh-" . $nodenumber . "-omni")
 
 :beep frequency=500 length=200ms;
 :delay 500ms;
