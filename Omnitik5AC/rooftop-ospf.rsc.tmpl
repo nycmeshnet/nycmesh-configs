@@ -2,6 +2,7 @@
 # Omnitik 5ac PoE
 :global nodenumber {{nodenumber}}
 :global ipprefix "{{ipprefix}}"
+:global ipprefixzero ($ipprefix . ".0")
 :global iptenantsrange {{ipprefix}}.5-{{ipprefix}}.200
 :global iptenantsgw {{ipprefix}}.1
 
@@ -27,6 +28,7 @@
 /interface bridge
 add auto-mac=yes name=local fast-forward=no 
 add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
+add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
 /interface bridge settings
 set use-ip-firewall=yes
@@ -41,15 +43,16 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
 :beep frequency=800 length=100ms
 
 /interface wireless
-set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states2" disabled=no distance=indoors frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
-add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=mesh wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
+add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 
 :beep frequency=900 length=100ms
 
 /ip address
-add address=($ipprefix . ".1/24") interface=local network=($ipprefix . ".0")
-add address={{meship}}/24 interface=mesh network=10.70.255.0
+add address=$ipprefixgw/24 interface=local network=$ipprefixzero
+add address={{meship}}/16 interface=mesh
+add address={{wdsip}}/16 interface=wds
 
 :beep frequency=1000 length=100ms
 
@@ -62,16 +65,17 @@ add add-default-route=no disabled=yes interface=ether5 use-peer-dns=no use-peer-
 add bridge=local interface=ether1
 add bridge=local interface=ether2
 add bridge=local interface=ether3
+add bridge=local interface=ether4
+add bridge=mesh interface=ether5
 add bridge=local interface=wlan1
 add bridge=local interface=wlan2
-add bridge=mesh interface=ether4
-add bridge=mesh interface=ether5
-add bridge=mesh interface=dynamic internal-path-cost=50 path-cost=50
+add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
 :beep frequency=1200 length=100ms
 
 /interface bridge filter
 add action=drop chain=forward in-bridge=mesh
+add action=drop chain=forward in-bridge=wds
 add action=drop chain=forward in-interface=wlan2
 
 :beep frequency=1200 length=100ms
@@ -87,14 +91,16 @@ add address-pool=local disabled=no interface=local name=localdhcp
 :beep frequency=1400 length=100ms
 
 /ip dhcp-server network
-add address=($ipprefix . ".0/24") dns-server=10.10.10.10 gateway=($ipprefix . ".1") netmask=24
+add address=$ipprefixzero/24 dns-server=10.10.10.10 gateway=$iptenantsgw netmask=24
 
 :beep frequency=1500 length=100ms
 
-/routing ospf instance set [ find default=yes ] distribute-default=if-installed-as-type-1 router-id=($ipprefix . ".1") redistribute-connected=as-type-1
+/routing ospf instance set [ find default=yes ] distribute-default=if-installed-as-type-1 router-id=$ipprefixgw redistribute-connected=as-type-1
 /routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
-/routing ospf network add area=backbone network=10.70.255.0/24
+/routing ospf interface add interface=wds network-type=ptmp
+/routing ospf network add area=backbone network=10.69.0.0/16
+/routing ospf network add area=backbone network=10.68.0.0/16
 
 :beep frequency=1600 length=100ms
 
