@@ -99,7 +99,7 @@ add address=($ipprefixzero . "/24") dns-server=10.10.10.10 gateway=$ipprefixgw n
 /routing ospf instance set [ find default=yes ] distribute-default=if-installed-as-type-1 router-id=$ipprefixgw redistribute-connected=as-type-1
 /routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
-/routing ospf interface add interface=wds network-type=ptmp
+/routing ospf interface add interface=wds network-type=ptmp cost=100
 /routing ospf network add area=backbone network=10.69.0.0/16
 /routing ospf network add area=backbone network=10.68.0.0/16
 
