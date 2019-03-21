@@ -18,17 +18,6 @@
 
 /delay 15
 
-:for j from=1 to=4 step=1 do={
-  :for i from=2000 to=50 step=-400 do={
-    :beep frequency=$i length=11ms;
-    :delay 11ms;
-  }
-  :for i from=800 to=2000 step=400 do={
-    :beep frequency=$i length=11ms;
-    :delay 11ms;
-  }
-}
-
 :beep frequency=500 length=100ms
 
 :foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
@@ -138,6 +127,8 @@ set sctp disabled=yes
 
 /system clock set time-zone-name=America/New_York
 /system identity set name=("nycmesh-" . $nodenumber . "-omni")
+
+/delay 2
 
 :beep frequency=220 length=200ms;
 :delay 200ms;
