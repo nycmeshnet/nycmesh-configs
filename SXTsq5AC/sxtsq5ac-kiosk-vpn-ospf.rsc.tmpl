@@ -93,11 +93,17 @@ add address=$cidr dns-server=("10.10.10.10," . $firstip) gateway=$firstip netmas
 /routing ospf network add area=backbone network=10.68.0.0/16
 /routing ospf network add area=backbone network=10.70.72.0/24
 
+/ip firewall address-list
+add address=10.0.0.0/8 list=meshaddr
+add address=199.167.59.0/24 list=meshaddr
+add address=199.170.132.0/24 list=meshaddr
+
 /ip firewall filter
 add action=accept chain=input connection-state=established,related,untracked
 add action=drop chain=input connection-state=invalid
 add action=accept chain=input protocol=icmp
 add action=drop chain=input in-interface=wlan1
+add action=drop chain=input src-address-list=!meshaddr
 add action=fasttrack-connection chain=forward connection-state=established,related
 add action=accept chain=forward connection-state=established,related,untracked
 add action=accept chain=forward ipsec-policy=in,ipsec
@@ -120,8 +126,12 @@ set sctp disabled=yes
 
 /snmp set enabled=yes
 
-/system clock set time-zone-name=America/New_York
 /system identity set name=("nycmesh-" . $nodenumber . "-sxtsq")
+
+/system clock set time-zone-name=America/New_York
+/system ntp client
+set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
 
 /tool netwatch add down-script="/ip dhcp-client release 0" host=8.8.8.8 interval=2m timeout=2s
 

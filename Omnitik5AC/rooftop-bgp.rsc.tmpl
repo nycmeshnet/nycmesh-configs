@@ -1,7 +1,8 @@
 # NYC Mesh Mikrotik Omnitik config
-# Omnitik 5ac PoE
+# Omnitik 5ac
 :global nodenumber {{nodenumber}}
 :global bgpasn {{bgpasn}}
+:global offset 1
 
 :global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
 :global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
@@ -43,7 +44,7 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
 :beep frequency=800 length=100ms
 
 /interface wireless
-set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni" . $offset)  wireless-protocol=802.11 wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 
@@ -113,9 +114,15 @@ add network=$cidr synchronize=no
 
 :beep frequency=1650 length=100ms
 
+/ip firewall address-list
+add address=10.0.0.0/8 list=meshaddr
+add address=199.167.59.0/24 list=meshaddr
+add address=199.170.132.0/24 list=meshaddr
+
 /ip firewall filter
 add action=accept chain=input protocol=icmp
 add action=drop chain=input in-bridge-port=wlan2
+add action=drop chain=input src-address-list=!meshaddresses
 add action=accept chain=forward
 add action=accept chain=input
 
@@ -136,8 +143,12 @@ set sctp disabled=yes
 
 :beep frequency=1800 length=100ms
 
+/system identity set name=("nycmesh-" . $nodenumber . "-omni" . $offset)
+
 /system clock set time-zone-name=America/New_York
-/system identity set name=("nycmesh-" . $nodenumber . "-omni")
+/system ntp client
+set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
 
 /delay 2
 
