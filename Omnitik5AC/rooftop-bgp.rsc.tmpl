@@ -121,7 +121,7 @@ add address=199.170.132.0/24 list=meshaddr
 /ip firewall filter
 add action=accept chain=input protocol=icmp
 add action=drop chain=input in-bridge-port=wlan2
-add action=drop chain=input src-address-list=!meshaddresses
+add action=drop chain=input src-address-list=!meshaddr
 add action=accept chain=forward
 add action=accept chain=input
 
