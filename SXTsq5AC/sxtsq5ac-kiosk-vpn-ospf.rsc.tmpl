@@ -57,6 +57,7 @@ add add-default-route=yes default-route-distance=210 disabled=no interface=wlan1
     \n/ip route remove [ /ip route find dst-address=199.167.59.6/32 ]\
     \n/ip route remove [ /ip route find dst-address=8.8.8.8/32 ]\
     \n/ip route add dst-address=199.167.59.6/32 gateway=\$currentGateway\
+    \n/ip route add dst-address=199.170.132.6/32 gateway=\$currentGateway\
     \n/ip route add dst-address=8.8.8.8/32 gateway=\$currentGateway"
 
 /ip dns set allow-remote-requests=yes
