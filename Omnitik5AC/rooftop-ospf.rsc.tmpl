@@ -46,6 +46,10 @@ set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee 
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 
+/interface wireless connect-list
+add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-75..120
+add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-75
+
 :beep frequency=900 length=100ms
 
 /ip address
