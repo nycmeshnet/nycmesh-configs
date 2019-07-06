@@ -12,7 +12,6 @@
 :global subnet ($cidrleft&$netmask)
 :global firstip ($subnet+1)
 :global lastip ($subnet + (~($subnet|$netmask)) - 1)
-:global dhcprange (($firstip+5) . "-" . ($lastip-5))
 :global meship ("10.69." . $ipthirdoctet . "." . (100 + $ipfourthoctet))
 :global wdsip ("10.68." . $ipthirdoctet . "." . (100 + $ipfourthoctet))
 
@@ -42,7 +41,6 @@ add allow-signal-out-of-range=3s interface=wlan1 security-profile=nycmeshnet sig
 add connect=no interface=wlan1 security-profile=nycmeshnet signal-range=-120..-75
 
 /ip address
-add address=($firstip . "/" . $cidrright) interface=local disabled=yes comment="Disabled unless a solo node"
 add address=($meship . "/16") interface=mesh
 add address=($wdsip . "/16") interface=wds
 
@@ -54,15 +52,6 @@ add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 /interface bridge filter
 add action=drop chain=forward in-bridge=mesh
 add action=drop chain=forward in-bridge=wds
-
-/ip pool
-add name=local ranges=$dhcprange disabled=yes comment="Disabled unless a solo node"
-
-/ip dhcp-server
-add address-pool=local disabled=yes interface=local name=localdhcp comment="Disabled unless a solo node"
-
-/ip dhcp-server network
-add address=$cidr dns-server=10.10.10.10 gateway=$firstip netmask=$cidrright disabled=yes comment="Disabled unless a solo node"
 
 /ip dns
 set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
