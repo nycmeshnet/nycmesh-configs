@@ -34,8 +34,8 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
 
 /interface wireless
-set [ find default-name=wlan1 ] band=2ghz-b/g/n channel-width=20/40mhz-Ce frequency=auto country="united states3" disabled=no distance=dynamic antenna-gain=2 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled
-set [ find default-name=wlan2 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=2 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled
+set [ find default-name=wlan1 ] band=2ghz-b/g/n channel-width=20/40mhz-Ce frequency=auto country="united states3" disabled=no distance=dynamic antenna-gain=2 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2") radio-name=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled
+set [ find default-name=wlan2 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=2 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2") radio-name=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled
 add disabled=no master-interface=wlan2 name=wlan3 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan2 name=wlan4 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 
