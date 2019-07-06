@@ -64,6 +64,9 @@ add address-pool=local disabled=no interface=local name=localdhcp
 /ip dhcp-server network
 add address=$cidr dns-server=10.10.10.10 gateway=$firstip netmask=$cidrright
 
+/ip dns
+set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+
 /routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
 /routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
@@ -78,9 +81,8 @@ add address=199.170.132.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input protocol=icmp
+add action=accept chain=input dst-port=53 protocol=udp
 add action=drop chain=input src-address-list=!meshaddr
-add action=accept chain=forward
-add action=accept chain=input
 
 /ip firewall service-port
 set ftp disabled=yes
