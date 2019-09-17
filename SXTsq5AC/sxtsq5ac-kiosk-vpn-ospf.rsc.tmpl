@@ -85,7 +85,7 @@ add address=$cidr dns-server=("10.10.10.10," . $firstip) gateway=$firstip netmas
 /routing filter add action=accept chain=meshaddrs prefix=0.0.0.0/0
 /routing filter add action=discard chain=meshaddrs
 
-/routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
+/routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1 metric-default=500
 /routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
 /routing ospf interface add interface=wds network-type=ptmp
