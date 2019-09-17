@@ -62,7 +62,7 @@ add name=local ranges=$dhcprange
 add address-pool=local disabled=no interface=local name=localdhcp
 
 /ip dhcp-server network
-add address=$cidr dns-server=10.10.10.10 gateway=$firstip netmask=$cidrright
+add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
 
 /ip dns
 set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
