@@ -46,8 +46,8 @@ add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi
 add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 
 /interface wireless connect-list
-add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-75..120
-add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-75
+add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 :beep frequency=900 length=100ms
 
