@@ -25,7 +25,6 @@
 :beep frequency=600 length=100ms
 
 /interface bridge
-add auto-mac=yes name=local fast-forward=no 
 add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
 add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
@@ -53,7 +52,7 @@ add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-7
 :beep frequency=900 length=100ms
 
 /ip address
-add address=($firstip . "/" . $cidrright) interface=local
+add address=($firstip . "/" . $cidrright) interface=mesh
 add address=($meship . "/16") interface=mesh
 add address=($wdsip . "/16") interface=wds
 
@@ -65,13 +64,13 @@ add add-default-route=no disabled=yes interface=ether5 use-peer-dns=no use-peer-
 :beep frequency=1100 length=100ms
 
 /interface bridge port
-add bridge=local interface=ether1
-add bridge=local interface=ether2
-add bridge=local interface=ether3
-add bridge=local interface=ether4
+add bridge=mesh interface=ether1
+add bridge=mesh interface=ether2
+add bridge=mesh interface=ether3
+add bridge=mesh interface=ether4
 add bridge=mesh interface=ether5
-add bridge=local interface=wlan1
-add bridge=local interface=wlan2
+add bridge=mesh interface=wlan1
+add bridge=mesh interface=wlan2
 add bridge=wds interface=wlan3
 add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
@@ -90,7 +89,7 @@ add name=local ranges=$dhcprange
 :beep frequency=1300 length=100ms
 
 /ip dhcp-server
-add address-pool=local disabled=no interface=local name=localdhcp
+add address-pool=local disabled=no interface=mesh name=localdhcp
 
 :beep frequency=1400 length=100ms
 
