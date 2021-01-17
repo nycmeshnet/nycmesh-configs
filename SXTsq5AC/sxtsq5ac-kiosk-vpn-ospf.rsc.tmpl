@@ -61,7 +61,7 @@ add add-default-route=yes default-route-distance=210 disabled=no interface=wlan1
     \n/ip route add dst-address=8.8.8.8/32 gateway=\$currentGateway"
 
 /ip dns set allow-remote-requests=yes
-/ip dns set allow-remote-requests=yes servers=10.10.10.10,8.8.8.8,8.8.8.4
+/ip dns set allow-remote-requests=yes servers=10.10.10.10,8.8.8.8,8.8.4.4
 
 /interface bridge port
 add bridge=mesh interface=ether1
