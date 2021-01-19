@@ -33,6 +33,9 @@ set use-ip-firewall=yes
 
 :beep frequency=700 length=100ms
 
+/interface ethernet
+set [ find default-name=ether1 ] comment="#$nodenumber"
+
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     dynamic-keys name=nycmeshnet supplicant-identity=nycmesh \
@@ -41,9 +44,10 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
 :beep frequency=800 length=100ms
 
 /interface wireless
-set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
+add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
 
 /interface wireless connect-list
 add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
@@ -64,13 +68,14 @@ add add-default-route=no disabled=yes interface=ether5 use-peer-dns=no use-peer-
 :beep frequency=1100 length=100ms
 
 /interface bridge port
-add bridge=mesh interface=ether1
-add bridge=mesh interface=ether2
-add bridge=mesh interface=ether3
-add bridge=mesh interface=ether4
-add bridge=mesh interface=ether5
+add bridge=mesh hw=no interface=ether1
+add bridge=mesh hw=no interface=ether2
+add bridge=mesh hw=no interface=ether3
+add bridge=mesh hw=no interface=ether4
+add bridge=mesh hw=no interface=ether5
 add bridge=mesh interface=wlan1
 add bridge=mesh interface=wlan2
+add bridge=mesh interface=wlan4
 add bridge=wds interface=wlan3
 add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
