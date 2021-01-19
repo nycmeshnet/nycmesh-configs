@@ -34,7 +34,7 @@ set use-ip-firewall=yes
 :beep frequency=700 length=100ms
 
 /interface ethernet
-set [ find default-name=ether1 ] comment="#$nodenumber"
+set [ find default-name=ether1 ] comment="NN:$nodenumber"
 
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
