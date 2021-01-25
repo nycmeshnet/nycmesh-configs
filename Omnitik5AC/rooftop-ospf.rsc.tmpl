@@ -1,6 +1,6 @@
 # NYC Mesh Mikrotik Omnitik config
 # Omnitik 5ac
-:global nodenumber {{nodenumber}}
+:global nodenumber {{network_number}}
 
 :global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
 :global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
