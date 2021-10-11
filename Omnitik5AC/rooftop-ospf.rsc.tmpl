@@ -35,7 +35,6 @@ set use-ip-firewall=yes
 
 /interface ethernet
 set [ find default-name=ether1 ] comment="NN:$nodenumber"
-set [ find default-name=ether5 ] poe-out=forced-on
 
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
