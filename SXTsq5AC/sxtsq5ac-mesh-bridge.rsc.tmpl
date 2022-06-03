@@ -1,0 +1,66 @@
+# NYC Mesh Mikrotik SXTsq 5ac OSPF config
+# OSPF mesh node
+:global nodenumber {{nodenumber}}
+
+/delay 15
+
+:foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
+
+/interface bridge
+add auto-mac=yes name=bridge fast-forward=no
+
+/interface bridge settings
+set use-ip-firewall=yes
+
+/interface wireless security-profiles
+add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
+    dynamic-keys name=nycmeshnet supplicant-identity=nycmesh \
+    wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
+
+/interface wireless
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=station-bridge security-profile=nycmeshnet wireless-protocol=802.11 wps-mode=disabled ssid="nycmesh-xxxx-omni" radio-name=("nycmesh-" . $nodenumber . "-sxt") comment="uses nycmesh-xxxx-omni via bridge"
+
+/interface wireless connect-list
+add allow-signal-out-of-range=3s disabled=yes interface=wlan1 security-profile=nycmeshnet signal-range=-75..120
+add connect=no disabled=yes interface=wlan1 security-profile=nycmeshnet signal-range=-120..-75
+
+/ip dhcp-client
+add dhcp-options=hostname,clientid disabled=no interface=bridge
+
+/interface bridge port
+add bridge=bridge interface=ether1
+add bridge=bridge interface=wlan1
+
+/ip dns
+set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+
+/ip firewall address-list
+add address=10.0.0.0/8 list=meshaddr
+add address=199.167.59.0/24 list=meshaddr
+add address=199.170.132.0/24 list=meshaddr
+
+/ip firewall filter
+add action=accept chain=input protocol=icmp
+add action=accept chain=input dst-port=53 protocol=udp
+add action=accept chain=input connection-state=established,related
+add action=drop chain=input src-address-list=!meshaddr
+
+/ip firewall service-port
+set ftp disabled=yes
+set tftp disabled=yes
+set irc disabled=yes
+set h323 disabled=yes
+set sip disabled=yes
+set pptp disabled=yes
+set udplite disabled=yes
+set dccp disabled=yes
+set sctp disabled=yes
+
+/snmp set enabled=yes
+
+/system identity set name=("nycmesh-" . $nodenumber . "-sxt")
+
+/system clock set time-zone-name=America/New_York
+/system ntp client
+set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
