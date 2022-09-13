@@ -53,12 +53,23 @@ add address=($meship . "/16") interface=mesh
 add address=($wdsip . "/16") interface=wds
 
 /ip dhcp-client
-add add-default-route=yes default-route-distance=210 disabled=no interface=wlan1 use-peer-dns=no use-peer-ntp=no script=":local currentGateway [ /ip dhcp-client get [/ip dhcp-client find status=bound ] gateway ]\
-    \n/ip route remove [ /ip route find dst-address=199.167.59.6/32 ]\
+add add-default-route=no interface=wlan1 script="####### MESH SCRIPT for PUBLIC PORTAL ###########\
+    \n/ip route remove [ /ip route find gateway=10.64.0.1 ]\
+    \n/ip route remove [ /ip route find gateway=100.64.0.1 ]\
+    \n/ip route remove [ /ip route find gateway=100.96.0.1 ]\
     \n/ip route remove [ /ip route find dst-address=8.8.8.8/32 ]\
-    \n/ip route add dst-address=199.167.59.6/32 gateway=\$currentGateway\
-    \n/ip route add dst-address=199.170.132.6/32 gateway=\$currentGateway\
-    \n/ip route add dst-address=8.8.8.8/32 gateway=\$currentGateway"
+    \n/ip route remove [ /ip route find dst-address=1.1.1.1/32 ]\
+    \n/ip route add gateway=100.64.0.1 distance=210\
+    \n/ip route add dst-address=0.0.0.0/0 gateway=100.64.0.1 distance=210\
+    \n/ip route add dst-address=199.167.59.6/32 gateway=100.64.0.1 distance=1\
+    \n/ip route add dst-address=199.170.132.6/32 gateway=100.64.0.1 distance=1\
+    \n/ip route add dst-address=199.170.132.4/32 gateway=100.64.0.1 distance=1\
+    \n/ip route add gateway=100.96.0.1 distance=210\
+    \n/ip route add dst-address=0.0.0.0/0 gateway=100.96.0.1 distance=210\
+    \n/ip route add dst-address=199.167.59.6/32 gateway=100.96.0.1 distance=1\
+    \n/ip route add dst-address=199.170.132.6/32 gateway=100.96.0.1 distance=1\
+    \n/ip route add dst-address=199.170.132.4/32 gateway=100.96.0.1 distance=1\
+    \n####### MESH SCRIPT for PUBLIC PORTAL ###########" use-peer-dns=no use-peer-ntp=no
 
 /ip dns set allow-remote-requests=yes
 /ip dns set allow-remote-requests=yes servers=10.10.10.10,8.8.8.8,8.8.4.4
