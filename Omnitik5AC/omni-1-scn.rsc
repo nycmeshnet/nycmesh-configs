@@ -3,7 +3,6 @@
 # Omnitik 5ac
 :global nodenumber 1234
 
-
 :global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
 :global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
 :global ipfourthoctet ( [ :pick $nodenumber ([:len $nodenumber] - 2) ([:len $nodenumber]) ] + 0 )
@@ -119,8 +118,6 @@ set allow-remote-requests=yes servers=1.1.1.1
 
 /ip firewall address-list
 add address=10.0.0.0/8 list=meshaddr
-add address=199.167.59.0/24 list=meshaddr
-add address=199.170.132.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input protocol=icmp
