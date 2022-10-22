@@ -1,0 +1,205 @@
+# SCN Omni config
+# forked from NYC Mesh Mikrotik Omnitik config
+# Omnitik 5ac
+:global nodenumber 1234
+
+:global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
+:global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
+:global ipfourthoctet ( [ :pick $nodenumber ([:len $nodenumber] - 2) ([:len $nodenumber]) ] + 0 )
+
+:global cidrleft [ :pick $cidr 0 ( [ :find $cidr "/" ] ) ]
+:global cidrright [ :pick $cidr (( [ :find $cidr "/" ] )+1) 100 ]
+:global netmask (255.255.255.255<<(32-$cidrright))
+:global subnet ($cidrleft&$netmask)
+:global firstip ($subnet+1)
+:global lastip ($subnet + (~($subnet|$netmask)) - 1)
+:global dhcprange (($firstip+5) . "-" . ($lastip-5))
+:global meship ("10.69." . $ipthirdoctet . "." . $ipfourthoctet)
+:global wdsip ("10.68." . $ipthirdoctet . "." . $ipfourthoctet)
+
+/delay 15
+
+:beep frequency=500 length=100ms
+
+:foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
+
+:beep frequency=600 length=100ms
+
+/interface bridge
+add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
+add auto-mac=yes name=wds fast-forward=no protocol-mode=none
+
+/interface bridge settings
+set use-ip-firewall=yes
+
+:beep frequency=700 length=100ms
+
+/interface ethernet
+set [ find default-name=ether1 ] comment="NN:$nodenumber"
+
+/interface wireless security-profiles
+add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
+    dynamic-keys name=scnpass supplicant-identity=scn \
+    wpa-pre-shared-key=scnpass wpa2-pre-shared-key=scnpass
+
+:beep frequency=800 length=100ms
+
+/interface wireless
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=scnpass ssid=("scn-" . $nodenumber . "-omni") radio-name=("scn-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
+add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
+add disabled=no master-interface=wlan1 name=wlan3 ssid="scn-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=scnpass
+add comment="uses scn-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=scnpass ssid=scn-xxxx-omni wds-default-bridge=mesh
+
+/interface wireless connect-list
+add allow-signal-out-of-range=3s interface=wlan3 security-profile=scnpass signal-range=-65..120
+add connect=no interface=wlan3 security-profile=scnpass signal-range=-120..-65
+
+:beep frequency=900 length=100ms
+
+/ip address
+add address=($firstip . "/" . $cidrright) interface=mesh
+add address=($meship . "/16") interface=mesh
+add address=($wdsip . "/16") interface=wds
+
+:beep frequency=1000 length=100ms
+
+/ip dhcp-client
+add add-default-route=no disabled=yes interface=ether5 use-peer-dns=no use-peer-ntp=no
+
+:beep frequency=1100 length=100ms
+
+/interface bridge port
+add bridge=mesh hw=no interface=ether1
+add bridge=mesh hw=no interface=ether2
+add bridge=mesh hw=no interface=ether3
+add bridge=mesh hw=no interface=ether4
+add bridge=mesh hw=no interface=ether5
+add bridge=mesh interface=wlan1
+add bridge=mesh interface=wlan2
+add bridge=mesh interface=wlan4
+add bridge=wds interface=wlan3
+add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
+
+:beep frequency=1200 length=100ms
+
+/interface bridge filter
+add action=drop chain=forward in-bridge=mesh
+add action=drop chain=forward in-bridge=wds
+add action=drop chain=forward in-interface=wlan2
+
+:beep frequency=1200 length=100ms
+
+/ip pool
+add name=local ranges=$dhcprange
+
+:beep frequency=1300 length=100ms
+
+/ip dhcp-server
+add address-pool=local disabled=no interface=mesh name=localdhcp
+
+:beep frequency=1400 length=100ms
+
+/ip dhcp-server network
+add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
+
+/ip dns
+set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+
+:beep frequency=1500 length=100ms
+
+/routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
+/routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
+/routing ospf interface add interface=mesh network-type=ptmp
+/routing ospf interface add interface=wds network-type=ptmp cost=100
+/routing ospf network add area=backbone network=10.69.0.0/16
+/routing ospf network add area=backbone network=10.68.0.0/16
+
+:beep frequency=1600 length=100ms
+
+/ip firewall address-list
+add address=10.0.0.0/8 list=meshaddr
+add address=199.167.59.0/24 list=meshaddr
+add address=199.170.132.0/24 list=meshaddr
+
+/ip firewall filter
+add action=accept chain=input protocol=icmp
+add action=accept chain=input dst-port=53 protocol=udp
+add action=accept chain=input connection-state=established,related
+add action=drop chain=input in-bridge-port=wlan2
+add action=drop chain=input src-address-list=!meshaddr
+
+:beep frequency=1700 length=100ms
+
+/ip firewall service-port
+set ftp disabled=yes
+set tftp disabled=yes
+set irc disabled=yes
+set h323 disabled=yes
+set sip disabled=yes
+set pptp disabled=yes
+set udplite disabled=yes
+set dccp disabled=yes
+set sctp disabled=yes
+
+/snmp set enabled=yes
+
+:beep frequency=1800 length=100ms
+
+/system identity set name=("scn-" . $nodenumber . "-omni")
+
+/system clock set time-zone-name=America/New_York time-zone-autodetect=no
+/system ntp client
+set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
+/delay 2
+
+
+:beep frequency=220 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=220 length=200ms;
+:delay 200ms;
+:beep frequency=440 length=200ms;
+:delay 200ms;
+:beep frequency=220 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=1396 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=588 length=200ms;
+:delay 200ms;
+:beep frequency=294 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=659 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=220 length=200ms;
