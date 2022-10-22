@@ -101,10 +101,10 @@ add address-pool=local disabled=no interface=mesh name=localdhcp
 :beep frequency=1400 length=100ms
 
 /ip dhcp-server network
-add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
+add address=$cidr dns-server=( "1.1.1.1," . $firstip) gateway=$firstip netmask=$cidrright
 
 /ip dns
-set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+set allow-remote-requests=yes servers=1.1.1.1
 
 :beep frequency=1500 length=100ms
 
