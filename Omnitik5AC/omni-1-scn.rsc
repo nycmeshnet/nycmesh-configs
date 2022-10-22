@@ -147,7 +147,7 @@ set sctp disabled=yes
 
 /system clock set time-zone-name=America/Los_Angeles time-zone-autodetect=no
 /system ntp client
-set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+set enabled=yes server-dns-names=0.pool.ntp.org
 
 /delay 2
 
