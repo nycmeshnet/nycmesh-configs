@@ -3,6 +3,7 @@
 # Omnitik 5ac
 :global nodenumber 1234
 
+
 :global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
 :global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
 :global ipfourthoctet ( [ :pick $nodenumber ([:len $nodenumber] - 2) ([:len $nodenumber]) ] + 0 )
@@ -39,20 +40,20 @@ set [ find default-name=ether1 ] comment="NN:$nodenumber"
 
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
-    dynamic-keys name=scnpass supplicant-identity=scn \
-    wpa-pre-shared-key=scnpass wpa2-pre-shared-key=scnpass
+    dynamic-keys name=scnpassword supplicant-identity=scn \
+    wpa-pre-shared-key=scnpassword wpa2-pre-shared-key=scnpassword
 
 :beep frequency=800 length=100ms
 
 /interface wireless
-set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=scnpass ssid=("scn-" . $nodenumber . "-omni") radio-name=("scn-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=scnpassword ssid=("scn-" . $nodenumber . "-omni") radio-name=("scn-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
-add disabled=no master-interface=wlan1 name=wlan3 ssid="scn-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=scnpass
-add comment="uses scn-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=scnpass ssid=scn-xxxx-omni wds-default-bridge=mesh
+add disabled=no master-interface=wlan1 name=wlan3 ssid="scn-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=scnpassword
+add comment="uses scn-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=scnpassword ssid=scn-xxxx-omni wds-default-bridge=mesh
 
 /interface wireless connect-list
-add allow-signal-out-of-range=3s interface=wlan3 security-profile=scnpass signal-range=-65..120
-add connect=no interface=wlan3 security-profile=scnpass signal-range=-120..-65
+add allow-signal-out-of-range=3s interface=wlan3 security-profile=scnpassword signal-range=-65..120
+add connect=no interface=wlan3 security-profile=scnpassword signal-range=-120..-65
 
 :beep frequency=900 length=100ms
 
