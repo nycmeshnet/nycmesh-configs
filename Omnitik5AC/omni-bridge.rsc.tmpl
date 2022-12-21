@@ -1,0 +1,35 @@
+# From default config
+/interface bridge
+add name=bridge disabled=no auto-mac=yes protocol-mode=rstp comment=defconf;
+/interface wireless
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-XXXX 
+  country="united states" disabled=no frequency=auto installation=any \
+  mode=ap-bridge ssid={{ ssid }} wireless-protocol=802.11
+/interface list
+add comment=defconf name=LAN
+/interface wireless security-profiles
+set [ find default=yes ] authentication-types=wpa2-psk mode=dynamic-keys \
+  supplicant-identity=MikroTik wpa-pre-shared-key=omniomni wpa2-pre-shared-key=omniomni
+/interface bridge port
+add bridge=bridge comment=defconf interface=ether2
+add bridge=bridge comment=defconf interface=ether3
+add bridge=bridge comment=defconf interface=ether4
+add bridge=bridge comment=defconf interface=ether5
+add bridge=bridge comment=defconf interface=wlan1
+add bridge=bridge interface=ether1
+/ip neighbor discovery-settings
+set discover-interface-list=LAN
+/interface list member
+add interface=ether1 list=LAN
+add interface=ether2 list=LAN
+add interface=ether3 list=LAN
+add interface=ether4 list=LAN
+add interface=ether5 list=LAN
+add interface=wlan1 list=LAN
+add interface=bridge list=LAN
+/ip dhcp-client
+add comment=defconf disabled=no interface=bridge
+/system clock
+set time-zone-name=America/Los_Angeles
+/system identity
+set name={{ identity }}
