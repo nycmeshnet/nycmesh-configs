@@ -78,6 +78,9 @@ add add-default-route=no interface=wlan1 script="####### MESH SCRIPT for PUBLIC 
 /ip dns set allow-remote-requests=yes
 /ip dns set allow-remote-requests=yes servers=10.10.10.10,8.8.8.8,8.8.4.4
 
+/ip dns static
+add address=$firstip comment="DNS A record for this device" name=n$nodenumber.mesh ttl=5m
+
 /interface bridge port
 add bridge=mesh interface=ether1
 

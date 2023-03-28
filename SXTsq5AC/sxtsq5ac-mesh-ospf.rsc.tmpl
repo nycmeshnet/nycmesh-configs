@@ -56,6 +56,9 @@ add action=drop chain=forward in-bridge=wds
 /ip dns
 set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 
+/ip dns static
+add address=$firstip comment="DNS A record for this device" name=n$nodenumber.mesh ttl=5m
+
 /routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
 /routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp

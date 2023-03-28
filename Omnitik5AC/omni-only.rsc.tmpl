@@ -104,6 +104,9 @@ add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netma
 /ip dns
 set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 
+/ip dns static
+add address=$firstip comment="DNS A record for this device" name=n$nodenumber.mesh ttl=5m
+
 :beep frequency=1500 length=100ms
 
 /routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
