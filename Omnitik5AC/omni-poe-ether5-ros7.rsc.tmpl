@@ -20,54 +20,58 @@
 
 :beep frequency=500 length=100ms
 
-:foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
+:foreach x in=[/interface/wireless/find] do={ /interface/wireless/reset-configuration $x }
 
 :beep frequency=600 length=100ms
 
-/interface bridge
+/interface/bridge
 add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
 add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
-/interface bridge settings
+/interface/bridge/settings
 set use-ip-firewall=yes
 
 :beep frequency=700 length=100ms
 
-/interface ethernet
+/interface/ethernet
 set [ find default-name=ether1 ] comment="NN:$nodenumber"
+set [ find default-name=ether2 ] poe-out=off
+set [ find default-name=ether3 ] poe-out=off
+set [ find default-name=ether4 ] poe-out=off
+set [ find default-name=ether5 ] poe-out=forced-on comment="device to hub"
 
-/interface wireless security-profiles
+/interface/wireless/security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     dynamic-keys name=nycmeshnet supplicant-identity=nycmesh \
     wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
 
 :beep frequency=800 length=100ms
 
-/interface wireless
+/interface/wireless
 set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
 
-/interface wireless connect-list
+/interface/wireless/connect-list
 add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
 add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 :beep frequency=900 length=100ms
 
-/ip address
+/ip/address
 add address=($firstip . "/" . $cidrright) interface=mesh
 add address=($meship . "/16") interface=mesh
 add address=($wdsip . "/16") interface=wds
 
 :beep frequency=1000 length=100ms
 
-/ip dhcp-client
+/ip/dhcp-client
 add add-default-route=no disabled=yes interface=ether5 use-peer-dns=no use-peer-ntp=no
 
 :beep frequency=1100 length=100ms
 
-/interface bridge port
+/interface/bridge/port
 add bridge=mesh hw=no interface=ether1
 add bridge=mesh hw=no interface=ether2
 add bridge=mesh hw=no interface=ether3
@@ -81,44 +85,60 @@ add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
 :beep frequency=1200 length=100ms
 
-/interface bridge filter
+/interface/bridge/filter
 add action=drop chain=forward in-bridge=mesh
 add action=drop chain=forward in-bridge=wds
 add action=drop chain=forward in-interface=wlan2
 
 :beep frequency=1200 length=100ms
 
-/ip pool
+/ip/pool
 add name=local ranges=$dhcprange
 
 :beep frequency=1300 length=100ms
 
-/ip dhcp-server
+/ip/dhcp-server
 add address-pool=local disabled=no interface=mesh name=localdhcp
 
 :beep frequency=1400 length=100ms
 
-/ip dhcp-server network
+/ip/dhcp-server network
 add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
 
-/ip dns
+/ip/dns
 set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 
 :beep frequency=1500 length=100ms
 
-/routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
-/routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
-/routing ospf interface add interface=mesh network-type=ptmp
-/routing ospf interface add interface=wds network-type=ptmp cost=100
-/routing ospf network add area=backbone network=10.69.0.0/16
-/routing ospf network add area=backbone network=10.68.0.0/16
+/routing/bfd/configuration
+add disabled=no interfaces=all
 
 :beep frequency=1600 length=100ms
+
+/routing/filter/rule
+add chain=ospf-in disabled=no rule="set distance 205;\
+    \nset bgp-communities 65000:110;\
+    \naccept;"
+add chain=ospf-out disabled=no rule="if (dst == 10.69.0.0/16) {\
+    \n  reject\
+    \n}"
+add chain=ospf-out disabled=no rule=accept
+
+/routing ospf instance
+add disabled=no in-filter-chain=ospf-in name=default originate-default=never out-filter-chain=ospf-out redistribute=connected router-id=$meship
+
+/routing/ospf/area
+add disabled=no instance=default name=backbone
+
+/routing ospf interface-template
+add area=backbone comment="mesh bridge" cost=10 disabled=no interfaces=mesh networks=10.69.0.0/16 priority=1 type=ptmp-broadcast use-bfd=yes
+add area=backbone comment="wds bridge" cost=100 disabled=no interfaces=wds networks=10.68.0.0/16 priority=1 type=ptmp-broadcast use-bfd=yes
 
 /ip firewall address-list
 add address=10.0.0.0/8 list=meshaddr
 add address=199.167.59.0/24 list=meshaddr
 add address=199.170.132.0/24 list=meshaddr
+add address=23.158.16.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input protocol=icmp
@@ -136,9 +156,6 @@ set irc disabled=yes
 set h323 disabled=yes
 set sip disabled=yes
 set pptp disabled=yes
-set udplite disabled=yes
-set dccp disabled=yes
-set sctp disabled=yes
 
 /snmp set enabled=yes
 
@@ -147,11 +164,27 @@ set sctp disabled=yes
 /system identity set name=("nycmesh-" . $nodenumber . "-omni")
 
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
-/system ntp client
-set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
+/system note
+set show-at-login=yes note="WARNING: This device is using a configuration/firmware combination from the testing branch. For any troubleshooting or configuration support, consult the #software-firmware channel on Slack."
+
+/system ntp client servers
+add address=10.10.10.123
+
+/system scheduler
+add interval=15s name=exstart_check on-event=exstart_repair policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon start-date=2024-01-15 start-time=21:11:00
+/system script
+add dont-require-permissions=no name=exstart_repair owner=admin policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local badNeighbor [/routing/ospf/neighbor/get [:pick [/routing/ospf/neighbor/find state=\"ExStart\"] 0 1] address]\
+    \n\
+    \n:log error \"Bad Neighbor Found: \$badNeighbor\"\
+    \n\
+    \n/routing/filter/rule/add chain=ospf-in place-before=0 rule=\"if (dst == \$badNeighbor/32) { reject }\"\
+    \n\
+    \n:delay 5000ms\
+    \n\
+    \n/routing/filter/rule/remove [find chain=ospf-in rule=\"if (dst == \$badNeighbor/32) { reject }\"]"
 
 /delay 2
-
 
 :beep frequency=220 length=200ms;
 :delay 200ms;
