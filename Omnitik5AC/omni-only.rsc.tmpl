@@ -150,6 +150,26 @@ set sctp disabled=yes
 /system ntp client
 set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
 
+{
+:local currentVersionNumber "1"
+:local scriptNamePrefix "ReEnableBridgeFilters"
+:local fullScriptName "$scriptNamePrefix_v$currentVersionNumber"
+
+/system script
+# Add bridge filter script
+add name="$fullScriptName" \
+    comment="Managed by ansible" \
+    policy=read,write \
+    source="# Managed by ansible\r\
+    \n:foreach fil in=[/interface bridge filter find disabled=yes action=drop chain=forward] do={\r\
+    \n:log info \"Re-enabling bridge filter \$fil\"\r\
+    \n/interface bridge filter set disabled=no \$fil\r\
+    \n}"
+
+/system scheduler
+add name=run-1h interval=1h on-event="$fullScriptName"
+}
+
 /delay 2
 
 
