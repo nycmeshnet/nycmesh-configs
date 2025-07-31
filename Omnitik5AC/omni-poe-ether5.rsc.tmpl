@@ -54,7 +54,7 @@ add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default
 add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
 
 /interface wireless connect-list
-add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+add allow-signal-out-of-range=5m interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
 add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 :beep frequency=900 length=100ms
@@ -153,6 +153,26 @@ set sctp disabled=yes
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
 /system ntp client
 set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
+{
+:local currentVersionNumber "1"
+:local scriptNamePrefix "ReEnableBridgeFilters"
+:local fullScriptName "$scriptNamePrefix_v$currentVersionNumber"
+
+/system script
+# Add bridge filter script
+add name="$fullScriptName" \
+    comment="Managed by ansible" \
+    policy=read,write \
+    source="# Managed by ansible\r\
+    \n:foreach fil in=[/interface bridge filter find disabled=yes action=drop chain=forward] do={\r\
+    \n:log info \"Re-enabling bridge filter \$fil\"\r\
+    \n/interface bridge filter set disabled=no \$fil\r\
+    \n}"
+
+/system scheduler
+add name=run-1h interval=1h on-event="$fullScriptName"
+}
 
 /delay 2
 
