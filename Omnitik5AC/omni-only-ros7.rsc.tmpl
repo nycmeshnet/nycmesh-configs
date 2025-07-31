@@ -153,7 +153,7 @@ set h323 disabled=yes
 set sip disabled=yes
 set pptp disabled=yes
 
-/snmp set enabled=yes
+/snmp set enabled=no
 
 :beep frequency=1800 length=100ms
 
@@ -185,6 +185,26 @@ add dont-require-permissions=no name=exstart_repair owner=admin policy=ftp,reboo
     \n:delay 5000ms\
     \n\
     \n/routing/filter/rule/remove [find chain=ospf-in rule=\"if (dst == \$badNeighbor/32) { reject }\"]"
+
+{
+:local currentVersionNumber "1"
+:local scriptNamePrefix "ReEnableBridgeFilters"
+:local fullScriptName "$scriptNamePrefix_v$currentVersionNumber"
+
+/system script
+# Add bridge filter script
+add name="$fullScriptName" \
+    comment="Managed by ansible" \
+    policy=read,write \
+    source="# Managed by ansible\r\
+    \n:foreach fil in=[/interface bridge filter find disabled=yes action=drop chain=forward] do={\r\
+    \n:log info \"Re-enabling bridge filter \$fil\"\r\
+    \n/interface bridge filter set disabled=no \$fil\r\
+    \n}"
+
+/system scheduler
+add name=run-1h interval=1h on-event="$fullScriptName"
+}
 
 /delay 2
 
