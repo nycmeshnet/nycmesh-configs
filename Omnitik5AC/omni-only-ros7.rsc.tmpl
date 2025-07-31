@@ -50,7 +50,7 @@ add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default
 add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
 
 /interface/wireless/connect-list
-add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+add allow-signal-out-of-range=5m interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
 add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 :beep frequency=900 length=100ms
@@ -138,7 +138,7 @@ add address=23.158.16.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input protocol=icmp
-add action=accept chain=input dst-port=53 protocol=udp
+add action=accept chain=input dst-port=53 protocol=udp src-address-list=meshaddr
 add action=accept chain=input connection-state=established,related
 add action=drop chain=input in-bridge-port=wlan2
 add action=drop chain=input src-address-list=!meshaddr
@@ -158,6 +158,12 @@ set pptp disabled=yes
 :beep frequency=1800 length=100ms
 
 /system identity set name=("nycmesh-" . $nodenumber . "-omni")
+
+/system logging
+add action=rsyslog topics=!dhcp,!debug,!packet,!dns,!snmp,!route,!account
+
+/system logging action
+add name=rsyslog remote=10.70.90.56 target=remote
 
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
 
@@ -179,6 +185,26 @@ add dont-require-permissions=no name=exstart_repair owner=admin policy=ftp,reboo
     \n:delay 5000ms\
     \n\
     \n/routing/filter/rule/remove [find chain=ospf-in rule=\"if (dst == \$badNeighbor/32) { reject }\"]"
+
+{
+:local currentVersionNumber "1"
+:local scriptNamePrefix "ReEnableBridgeFilters"
+:local fullScriptName "$scriptNamePrefix_v$currentVersionNumber"
+
+/system script
+# Add bridge filter script
+add name="$fullScriptName" \
+    comment="Managed by ansible" \
+    policy=read,write \
+    source="# Managed by ansible\r\
+    \n:foreach fil in=[/interface bridge filter find disabled=yes action=drop chain=forward] do={\r\
+    \n:log info \"Re-enabling bridge filter \$fil\"\r\
+    \n/interface bridge filter set disabled=no \$fil\r\
+    \n}"
+
+/system scheduler
+add name=run-1h interval=1h on-event="$fullScriptName"
+}
 
 /delay 2
 
