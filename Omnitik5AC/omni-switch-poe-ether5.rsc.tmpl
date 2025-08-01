@@ -113,6 +113,9 @@ add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
 /system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
 
+/tool graphing interface add
+/tool graphing resource add
+
 /delay 2
 
 
@@ -120,4 +123,49 @@ add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
 :delay 200ms;
 :beep frequency=880 length=200ms;
 :delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=220 length=200ms;
+:delay 200ms;
+:beep frequency=440 length=200ms;
+:delay 200ms;
+:beep frequency=220 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=1396 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=588 length=200ms;
+:delay 200ms;
+:beep frequency=294 length=200ms;
+:delay 200ms;
+:beep frequency=1175 length=200ms;
+:delay 200ms;
+:beep frequency=1046 length=200ms;
+:delay 200ms;
+:beep frequency=659 length=200ms;
+:delay 200ms;
+:beep frequency=1318 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+:beep frequency=220 length=200ms;
 

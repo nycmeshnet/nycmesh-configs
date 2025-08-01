@@ -150,6 +150,9 @@ set sctp disabled=yes
 /system ntp client
 set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
 
+/tool graphing interface add
+/tool graphing resource add
+
 {
 :local currentVersionNumber "1"
 :local scriptNamePrefix "ReEnableBridgeFilters"
