@@ -178,6 +178,30 @@ add name="$fullScriptName" \
 add name=run-1h interval=1h on-event="$fullScriptName"
 }
 
+/system script
+add name=low-memory.reboot policy= ftp,reboot,read,write,policy,test,password,sniff,sensitive \
+    dont-require-permissions=yes \
+    comment="reboot on low memory  (set at 75% used)" \
+    source= {
+# reboot on low free memory
+# low-memory.reboot
+# reboot on low memory  (set at 75% used)
+:global ztime [/system clock get time]
+:global freemem [/system resource get free-memory]
+:global totalmem [/system resource get total-memory]
+:global perme (100 * $freemem / $totalmem);
+:log info message=("Percentage of Free Memory: $perme % and Used Memory: $(100-$perme) %")
+# limit 33554432 free = 75% used then reboot between 2 and 3am
+# limit 40165376 free = 70% used
+# limit 53687091 free = 60% used
+# limit 67108864 free = 50% used
+:if ($ztime > 02:00:00 and $ztime < 03:00:00) \
+     do=[:if ($freemem < 33554432) do=[/system reboot]] \
+        else={:log info message=("Time is $ztime and free memory $freemem > 33554432 $(100-$perme) % used")}
+}
+/system scheduler
+add name=low-memory.reboot interval=00:15:00 on-event=low-memory.reboot disabled=no start-time=startup
+
 /delay 2
 
 
