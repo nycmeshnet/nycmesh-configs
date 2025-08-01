@@ -68,6 +68,9 @@ set 4 forwarding-override=ether1
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
 /system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
 
+/tool graphing interface add
+/tool graphing resource add
+
 /delay 2
 
 :beep frequency=220 length=200ms;
