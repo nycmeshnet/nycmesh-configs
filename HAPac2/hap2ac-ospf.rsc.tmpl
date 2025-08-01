@@ -21,7 +21,6 @@
 :foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
 
 /interface bridge
-add auto-mac=yes name=local fast-forward=no 
 add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
 add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
@@ -34,36 +33,35 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
 
 /interface wireless
-set [ find default-name=wlan1 ] band=2ghz-b/g/n channel-width=20/40mhz-Ce frequency=auto country="united states3" disabled=no distance=dynamic antenna-gain=2 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2") radio-name=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled
-set [ find default-name=wlan2 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=2 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2") radio-name=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled
+set [ find default-name=wlan1 ] band=2ghz-b/g/n channel-width=20/40mhz-Ce frequency=auto country="united states3" disabled=no distance=dynamic antenna-gain=2 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2") radio-name=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled 
+set [ find default-name=wlan2 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=2 frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-hapac2") radio-name=("nycmesh-" . $nodenumber . "-hapac2")  wireless-protocol=802.11 wps-mode=disabled default-forwarding=no wps-mode=disabled 
 add disabled=no master-interface=wlan2 name=wlan3 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan2 name=wlan4 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 
 /interface wireless connect-list
-add allow-signal-out-of-range=3s interface=wlan3 security-profile=nycmeshnet signal-range=-75..120
-add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-75
+add allow-signal-out-of-range=60s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 /ip address
-add address=($firstip . "/" . $cidrright) interface=local
+add address=($firstip . "/" . $cidrright) interface=mesh
 add address=($meship . "/16") interface=mesh
 add address=($wdsip . "/16") interface=wds
 
 /interface bridge port
-add bridge=local interface=ether1
-add bridge=local interface=ether2
-add bridge=local interface=ether3
-add bridge=local interface=ether4
+add bridge=mesh interface=ether1
+add bridge=mesh interface=ether2
+add bridge=mesh interface=ether3
+add bridge=mesh interface=ether4
 add bridge=mesh interface=ether5
-add bridge=local interface=wlan1
-add bridge=local interface=wlan2
-add bridge=local interface=wlan3
+add bridge=mesh interface=wlan1
+add bridge=mesh interface=wlan2
+add bridge=mesh interface=wlan3
 add bridge=wds interface=wlan4
 add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
 /interface bridge filter
 add action=drop chain=forward in-bridge=mesh
 add action=drop chain=forward in-bridge=wds
-add action=drop chain=forward in-interface=wlan3
 
 /ip pool
 add name=local ranges=$dhcprange
@@ -88,6 +86,7 @@ set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 add address=10.0.0.0/8 list=meshaddr
 add address=199.167.59.0/24 list=meshaddr
 add address=199.170.132.0/24 list=meshaddr
+add address=23.158.16.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input protocol=icmp
@@ -107,7 +106,7 @@ set udplite disabled=yes
 set dccp disabled=yes
 set sctp disabled=yes
 
-/snmp set enabled=yes
+/snmp set enabled=no
 
 /system identity set name=("nycmesh-" . $nodenumber . "-hapac2")
 
