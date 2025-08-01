@@ -113,6 +113,7 @@ add address=$cidr dns-server=("10.10.10.10," . $firstip) gateway=$firstip netmas
 add address=10.0.0.0/8 list=meshaddr
 add address=199.167.59.0/24 list=meshaddr
 add address=199.170.132.0/24 list=meshaddr
+add address=23.158.16.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input connection-state=established,related,untracked
