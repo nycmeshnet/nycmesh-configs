@@ -1,0 +1,123 @@
+# NYC Mesh Mikrotik Omnitik switch + WDS config
+# Omnitik 5ac poe
+# THIS CONFIG IS INTENDED FOR USE WITH THE SXTSQ5-CORE-WITH-OMNI OMNITIK CONFIG
+:global nodenumber {{nodenumber}}
+
+/delay 15
+
+:beep frequency=500 length=100ms
+
+:foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
+
+:beep frequency=600 length=100ms
+
+/interface bridge
+add name=mesh fast-forward=yes protocol-mode=none comment=("nycmesh-" . $nodenumber . "-omni (HW Offload + switch VLANs + WDS passthrough)")
+add name=wds fast-forward=no protocol-mode=none
+add name=wlan fast-forward=no protocol-mode=none
+
+:beep frequency=700 length=100ms
+
+#update poe to "forced-on" for antennas, routers, etc.
+/interface ethernet
+set [ find default-name=ether1 ] comment="POE in"
+set [ find default-name=ether2 ] poe-out=off
+set [ find default-name=ether3 ] poe-out=off
+set [ find default-name=ether4 ] poe-out=forced-on comment="antenna to hub"
+set [ find default-name=ether5 ] poe-out=forced-on comment="sxt or other core router"
+
+/interface vlan 
+add comment="wlan passthrough" interface=ether5 name=ether5.28 vlan-id=28
+add comment="wds passthrough" interface=ether5 name=ether5.29 vlan-id=29
+
+/interface wireless security-profiles add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=dynamic-keys name=nycmeshnet supplicant-identity=nycmesh wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
+
+:beep frequency=800 length=100ms
+
+/interface wireless set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
+/interface wireless add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
+/interface wireless add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
+/interface wireless add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
+
+/interface wireless connect-list add allow-signal-out-of-range=60s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+/interface wireless connect-list add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
+
+:beep frequency=900 length=100ms
+
+:beep frequency=1000 length=100ms
+
+/ip dhcp-client add dhcp-options=hostname,clientid disabled=no interface=mesh
+
+:beep frequency=1100 length=100ms
+
+/interface bridge port
+add bridge=mesh hw=yes interface=ether1
+add bridge=mesh hw=yes interface=ether2
+add bridge=mesh hw=yes interface=ether3
+add bridge=mesh hw=yes interface=ether4
+add bridge=mesh hw=yes interface=ether5
+add bridge=wlan interface=wlan1
+add bridge=wlan interface=wlan2
+add bridge=wlan interface=wlan4
+add bridge=wds interface=wlan3
+add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
+add bridge=wlan interface=ether5.28
+add bridge=wds interface=ether5.29
+
+:beep frequency=1200 length=100ms
+
+/interface ethernet switch port
+set 0 vlan-mode=fallback
+set 1 vlan-mode=fallback
+set 2 vlan-mode=fallback
+set 3 vlan-mode=fallback
+set 4 vlan-mode=fallback
+
+:beep frequency=1200 length=100ms
+
+/interface ethernet switch vlan
+add independent-learning=no ports=ether5,switch1-cpu switch=switch1 vlan-id=29
+add independent-learning=no ports=ether5,switch1-cpu switch=switch1 vlan-id=28
+
+:beep frequency=1300 length=100ms
+
+/interface ethernet switch port-isolation
+set 0 forwarding-override=ether5
+set 1 forwarding-override=ether5
+set 2 forwarding-override=ether5
+set 3 forwarding-override=ether5
+
+/interface bridge filter
+add action=drop chain=forward in-interface=wlan2
+add action=drop chain=forward in-interface-list=dynamic out-interface=\
+    !ether5.29
+add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
+    dynamic
+
+:beep frequency=1400 length=100ms
+
+/ip dns set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+
+:beep frequency=1500 length=100ms
+
+:beep frequency=1600 length=100ms
+
+:beep frequency=1700 length=100ms
+
+/snmp set enabled=no
+
+:beep frequency=1800 length=100ms
+
+/system identity set name=("nycmesh-" . $nodenumber . "-omni")
+
+/system clock set time-zone-name=America/New_York time-zone-autodetect=no
+/system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
+/delay 2
+
+
+:beep frequency=220 length=200ms;
+:delay 200ms;
+:beep frequency=880 length=200ms;
+:delay 200ms;
+

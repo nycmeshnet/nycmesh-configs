@@ -1,0 +1,77 @@
+# NYC Mesh Netpower16p switch config
+# CRS318-16p-2S+
+:global nodenumber {{nodenumber}}
+
+/delay 15
+
+/interface bridge
+add name=mesh fast-forward=yes protocol-mode=none vlan-filtering=yes comment=("nycmesh-" . $nodenumber . "-netpower16p")
+
+/interface ethernet
+set [ find default-name=ether1 ] poe-out=off
+set [ find default-name=ether2 ] poe-out=off
+set [ find default-name=ether3 ] poe-out=off
+set [ find default-name=ether4 ] poe-out=off
+set [ find default-name=ether5 ] poe-out=off
+set [ find default-name=ether6 ] poe-out=off
+set [ find default-name=ether7 ] poe-out=off
+set [ find default-name=ether8 ] poe-out=off
+set [ find default-name=ether9 ] poe-out=off
+set [ find default-name=ether10 ] poe-out=off
+set [ find default-name=ether11 ] poe-out=off
+set [ find default-name=ether12 ] poe-out=off
+set [ find default-name=ether13 ] poe-out=off
+set [ find default-name=ether14 ] poe-out=off
+set [ find default-name=ether15 ] poe-out=off
+set [ find default-name=ether16 ] poe-out=off comment="non-isolated: mgmt laptop or trunk to router"
+set [ find default-name=sfp-sfpplus1 ] comment="non-isolated: mgmt laptop or trunk to router"
+set [ find default-name=sfp-sfpplus2 ] comment="non-isolated: mgmt laptop or trunk to router"
+
+/ip dhcp-client add dhcp-options=hostname,clientid disabled=no interface=mesh
+
+/interface bridge port
+add bridge=mesh hw=yes interface=ether1
+add bridge=mesh hw=yes interface=ether2
+add bridge=mesh hw=yes interface=ether3
+add bridge=mesh hw=yes interface=ether4
+add bridge=mesh hw=yes interface=ether5
+add bridge=mesh hw=yes interface=ether6
+add bridge=mesh hw=yes interface=ether7
+add bridge=mesh hw=yes interface=ether8
+add bridge=mesh hw=yes interface=ether9
+add bridge=mesh hw=yes interface=ether10
+add bridge=mesh hw=yes interface=ether11
+add bridge=mesh hw=yes interface=ether12
+add bridge=mesh hw=yes interface=ether13
+add bridge=mesh hw=yes interface=ether14
+add bridge=mesh hw=yes interface=ether15
+add bridge=mesh hw=yes interface=ether16
+add bridge=mesh hw=yes interface=sfp-sfpplus1
+add bridge=mesh hw=yes interface=sfp-sfpplus2
+
+/interface ethernet switch port-isolation
+set 0 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 1 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 2 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 3 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 4 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 5 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 6 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 7 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 8 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 9 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 10 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 11 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 12 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 13 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+set 14 forwarding-override=ether16,sfp-sfpplus1,sfp-sfpplus2
+
+/ip dns set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+
+/snmp set enabled=no
+
+/system identity set name=("nycmesh-" . $nodenumber . "-netpower16p")
+
+/system clock set time-zone-name=America/New_York time-zone-autodetect=no
+/system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+

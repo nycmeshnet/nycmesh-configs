@@ -1,6 +1,6 @@
-# NYC Mesh Mikrotik SXTsq 5ac OSPF config
-# OSPF mesh node
-# THIS IS THE DEFAULT FOR AN SXT-ONLY INSTALL WITH A UNIQUE NN
+# NYC Mesh Mikrotik SXT Router config
+# SXTsq 5ac
+# THIS CONFIG IS INTENDED FOR USE WITH THE omni-switch-poe-ether5.rsc OMNITIK CONFIG
 :global nodenumber {{nodenumber}}
 
 :global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
@@ -17,18 +17,23 @@
 :global meship ("10.69." . $ipthirdoctet . "." . (100 + $ipfourthoctet))
 :global wdsip ("10.68." . $ipthirdoctet . "." . (100 + $ipfourthoctet))
 
-/delay 15
-
+/delay 2
 
 :foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
 
 /interface bridge
-add auto-mac=yes name=local fast-forward=no 
-add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
+add auto-mac=yes name=mesh fast-forward=no protocol-mode=none name=("nycmesh-" . $nodenumber . "-core")
 add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
 /interface bridge settings
 set use-ip-firewall=yes
+
+/interface ethernet
+set [ find default-name=ether1 ] comment="Trunk"
+
+/interface vlan
+add comment="          wlan bridge" interface=ether1 name=ether1.28 vlan-id=28
+add comment="          wds bridge" interface=ether1 name=ether1.29 vlan-id=29
 
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
@@ -36,21 +41,18 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
 
 /interface wireless
-set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=station-bridge security-profile=nycmeshnet wireless-protocol=802.11 wps-mode=disabled ssid="nycmesh-xxxx-omni" radio-name=("nycmesh-" . $nodenumber . "-sxt") comment="uses nycmesh-xxxx-omni via mesh bridge"
-
-/interface wireless connect-list
-add allow-signal-out-of-range=5m disabled=yes interface=wlan1 security-profile=nycmeshnet signal-range=-75..120
-add connect=no disabled=yes interface=wlan1 security-profile=nycmeshnet signal-range=-120..-75
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=station-bridge security-profile=nycmeshnet wireless-protocol=802.11 wps-mode=disabled ssid="nycmesh-xxxx-omni" radio-name=("nycmesh-" . $nodenumber . "-core-sxt") comment="uses nycmesh-xxxx-omni via bridge"
 
 /ip address
-add address=($firstip . "/" . $cidrright) interface=local
+add address=($firstip . "/" . $cidrright) interface=mesh
 add address=($meship . "/16") interface=mesh
 add address=($wdsip . "/16") interface=wds
 
 /interface bridge port
-add bridge=local interface=ether1
+add bridge=mesh hw=no interface=ether1
 add bridge=mesh interface=wlan1
-add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
+add bridge=mesh interface=ether1.28
+add bridge=wds interface=ether1.29
 
 /interface bridge filter
 add action=drop chain=forward in-bridge=mesh
@@ -60,7 +62,7 @@ add action=drop chain=forward in-bridge=wds
 add name=local ranges=$dhcprange
 
 /ip dhcp-server
-add address-pool=local disabled=no interface=local name=localdhcp
+add address-pool=local disabled=no interface=mesh name=localdhcp
 
 /ip dhcp-server network
 add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
@@ -71,7 +73,7 @@ set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 /routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
 /routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
-/routing ospf interface add interface=wds network-type=ptmp cost=30
+/routing ospf interface add interface=wds network-type=ptmp cost=100
 /routing ospf network add area=backbone network=10.69.0.0/16
 /routing ospf network add area=backbone network=10.68.0.0/16
 
@@ -79,6 +81,7 @@ set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 add address=10.0.0.0/8 list=meshaddr
 add address=199.167.59.0/24 list=meshaddr
 add address=199.170.132.0/24 list=meshaddr
+add address=23.158.16.0/24 list=meshaddr
 
 /ip firewall filter
 add action=accept chain=input protocol=icmp
@@ -97,11 +100,10 @@ set udplite disabled=yes
 set dccp disabled=yes
 set sctp disabled=yes
 
-/snmp set enabled=yes
+/snmp set enabled=no
 
-/system identity set name=("nycmesh-" . $nodenumber . "-sxt")
+/system identity set name=("nycmesh-" . $nodenumber . "-core-sxt")
 
-/system clock set time-zone-name=America/New_York
-/system ntp client
-set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+/system clock set time-zone-name=America/New_York time-zone-autodetect=no
 
+/system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
