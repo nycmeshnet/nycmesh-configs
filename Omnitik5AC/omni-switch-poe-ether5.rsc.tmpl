@@ -39,7 +39,7 @@ add comment="wds passthrough" interface=ether5 name=ether5.29 vlan-id=29
 /interface wireless add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 /interface wireless add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
 
-/interface wireless connect-list add allow-signal-out-of-range=60s interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+/interface wireless connect-list add allow-signal-out-of-range=5m interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
 /interface wireless connect-list add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 :beep frequency=900 length=100ms
