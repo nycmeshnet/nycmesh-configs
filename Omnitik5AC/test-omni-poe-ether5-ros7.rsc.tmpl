@@ -115,14 +115,9 @@ add disabled=no interfaces=all
 
 :beep frequency=1600 length=100ms
 
-/routing/filter/rule
-add chain=ospf-in disabled=no rule="set distance 205;\
-    \nset bgp-communities 65000:110;\
-    \naccept;"
-add chain=ospf-out disabled=no rule="if (dst == 10.69.0.0/16) {\
-    \n  reject\
-    \n}"
-add chain=ospf-out disabled=no rule=accept
+/routing filter rule add chain=ospf-in disabled=no rule=accept
+/routing filter rule add chain=ospf-out disabled=no rule="if (dst == 10.69.0.0/16) {reject;}"
+/routing filter rule add chain=ospf-out disabled=no rule=accept
 
 /routing ospf instance
 add disabled=no in-filter-chain=ospf-in name=default originate-default=never out-filter-chain=ospf-out redistribute=connected router-id=$meship
@@ -131,8 +126,8 @@ add disabled=no in-filter-chain=ospf-in name=default originate-default=never out
 add disabled=no instance=default name=backbone
 
 /routing ospf interface-template
-add area=backbone comment="mesh bridge" cost=10 disabled=no interfaces=mesh networks=10.69.0.0/16 priority=1 type=ptmp-broadcast use-bfd=yes
-add area=backbone comment="wds bridge" cost=100 disabled=no interfaces=wds networks=10.68.0.0/16 priority=1 type=ptmp-broadcast use-bfd=yes
+add area=backbone comment="mesh bridge" cost=10 disabled=no interfaces=mesh networks=10.69.0.0/16 priority=1 type=ptmp-broadcast use-bfd=no
+add area=backbone comment="wds bridge" cost=100 disabled=no interfaces=wds networks=10.68.0.0/16 priority=1 type=ptmp-broadcast use-bfd=no
 
 /ip firewall address-list
 add address=10.0.0.0/8 list=meshaddr
@@ -174,24 +169,97 @@ add name=rsyslog remote=10.70.90.56 target=remote
 /system note
 set show-at-login=yes note="WARNING: This device is using a configuration/firmware combination from the testing branch. For any troubleshooting or configuration support, consult the #software-firmware channel on Slack."
 
-/system ntp client servers
-add address=10.10.10.123
+/system ntp client set enabled=yes
+/system ntp client servers add address=10.10.10.123
 
 /tool graphing interface add
 /tool graphing resource add
 
 /system scheduler
 add interval=15s name=exstart_check on-event=exstart_repair policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon start-date=2024-01-15 start-time=21:11:00
+
 /system script
-add dont-require-permissions=no name=exstart_repair owner=admin policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source=":local badNeighbor [/routing/ospf/neighbor/get [:pick [/routing/ospf/neighbor/find state=\"ExStart\"] 0 1] address]\
+add comment="OSPF Bad Neighbor Fix" dont-require-permissions=no name=exstart_repair owner=admin policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source="# exstart_repair\
+    \n# reestablish OSPF links stuck in ExStart\
+    \n#\
+    \n# marg's 2024-10 updates to daniel's script\
     \n\
-    \n:log error \"Bad Neighbor Found: \$badNeighbor\"\
+    \n:local debug \"\";\
+    \n#:set debug \"_debug\"; #uncomment this line to turn on debugging\
     \n\
-    \n/routing/filter/rule/add chain=ospf-in place-before=0 rule=\"if (dst == \$badNeighbor/32) { reject }\"\
+    \n:local scriptName \"exstart_repair\$debug\";\
+    \n:local neighborNum \"\";\
+    \n:local badNeighbor \"\";\
     \n\
-    \n:delay 5000ms\
+    \ndo {\
+    \n  do {\
+    \n    :set neighborNum [:pick [/routing/ospf/neighbor/find state=\"ExStart\"] 0 1];\
+    \n  } on-error { :log warning \"\$scriptName: no matches\"; }\
+    \n    \
     \n\
-    \n/routing/filter/rule/remove [find chain=ospf-in rule=\"if (dst == \$badNeighbor/32) { reject }\"]"
+    \n  :set badNeighbor \\\
+    \n    [/routing/ospf/neighbor/get number=\$neighborNum value-name=address]; # find neighbors in a bad way\
+    \n  :log warning \"\$scriptName: Bad Neighbor Found: \$badNeighbor\";\
+    \n\
+    \n  do {\
+    \n    /routing/filter/rule/add chain=ospf-in place-before=0 rule=\"if (dst == \$badNeighbor/32) { reject }\";\
+    \n    :log warning \"\$scriptName: Rejecting Bad Neighbor \$badNeighbor for 5 seconds\";\
+    \n  } on-error { :log error \"\$scriptName: could not add reject rule\" }; # add a rule to reject neighbor\
+    \n\
+    \n  :delay 5000ms; # wait 5 seconds\
+    \n\
+    \n  do {\
+    \n    /routing/filter/rule/remove [find chain=ospf-in rule=\"if (dst == \$badNeighbor/32) { reject }\"];\
+    \n    :log warning \"\$scriptName: Allowing Bad Neighbor \$badNeighbor to establish adjacency\";\
+    \n  } on-error { :log error \"\$scriptName: could not remove reject rule\" }; # remove rule so it can try again\
+    \n\
+    \n} on-error {\
+    \n  :if (\$debug != \"\") do={:log info \"\$scriptName: nothing to do\";}; # do not set \$debug to stop spamming log\
+    \n}"
+
+{
+:local currentVersionNumber "1"
+:local scriptNamePrefix "ReEnableBridgeFilters"
+:local fullScriptName "$scriptNamePrefix_v$currentVersionNumber"
+
+/system script
+# Add bridge filter script
+add name="$fullScriptName" \
+    comment="Managed by ansible" \
+    policy=read,write \
+    source="# Managed by ansible\r\
+    \n:foreach fil in=[/interface bridge filter find disabled=yes action=drop chain=forward] do={\r\
+    \n:log info \"Re-enabling bridge filter \$fil\"\r\
+    \n/interface bridge filter set disabled=no \$fil\r\
+    \n}"
+
+/system scheduler
+add name=run-1h interval=1h on-event="$fullScriptName"
+}
+
+/system script
+add name=low-memory.reboot policy= ftp,reboot,read,write,policy,test,password,sniff,sensitive \
+    dont-require-permissions=yes \
+    comment="reboot on low memory  (set at 75% used)" \
+    source= {
+# reboot on low free memory
+# low-memory.reboot
+# reboot on low memory  (set at 75% used)
+:global ztime [/system clock get time]
+:global freemem [/system resource get free-memory]
+:global totalmem [/system resource get total-memory]
+:global perme (100 * $freemem / $totalmem);
+:log info message=("Percentage of Free Memory: $perme % and Used Memory: $(100-$perme) %")
+# limit 33554432 free = 75% used then reboot between 2 and 3am
+# limit 40165376 free = 70% used
+# limit 53687091 free = 60% used
+# limit 67108864 free = 50% used
+:if ($ztime > 02:00:00 and $ztime < 03:00:00) \
+     do=[:if ($freemem < 33554432) do=[/system reboot]] \
+        else={:log info message=("Time is $ztime and free memory $freemem > 33554432 $(100-$perme) % used")}
+}
+/system scheduler
+add name=low-memory.reboot interval=00:15:00 on-event=low-memory.reboot disabled=no start-time=startup
 
 /delay 2
 
