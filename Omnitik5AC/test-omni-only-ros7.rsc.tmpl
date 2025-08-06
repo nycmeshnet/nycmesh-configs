@@ -154,11 +154,9 @@ set pptp disabled=yes
 
 /system identity set name=("nycmesh-" . $nodenumber . "-omni")
 
-/system logging
-add action=rsyslog topics=!dhcp,!debug,!packet,!dns,!snmp,!route,!account
-
-/system logging action
-add name=rsyslog remote=10.70.90.56 target=remote
+# Set up syslog reporting
+/system logging action add name=rsyslog remote=10.70.90.56 target=remote
+/system logging add action=rsyslog topics=!dhcp,!debug,!packet,!dns,!snmp,!route,!account
 
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
 
