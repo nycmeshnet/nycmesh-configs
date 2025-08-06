@@ -1,10 +1,10 @@
 # NYC Mesh Mikrotik Omnitik config
 # Omnitik 5AC RouterOS 7 TEST BUILD with Port 5 PoE Enabled
-:global nodenumber {{network_number}}
+:global networknumber {{network_number}}
 
-:global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
-:global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
-:global ipfourthoctet ( [ :pick $nodenumber ([:len $nodenumber] - 2) ([:len $nodenumber]) ] + 0 )
+:global cidr ("10." . ((96+(networknumber>>10))+0) . "." . (((networknumber>>2)&255)+0) . "." . (((networknumber&3)<<6)+0) . "/26")
+:global ipthirdoctet ( [ :pick $networknumber ([:len $networknumber] - 5) ([:len $networknumber] - 2) ] + 0 )
+:global ipfourthoctet ( [ :pick $networknumber ([:len $networknumber] - 2) ([:len $networknumber]) ] + 0 )
 
 :global cidrleft [ :pick $cidr 0 ( [ :find $cidr "/" ] ) ]
 :global cidrright [ :pick $cidr (( [ :find $cidr "/" ] )+1) 100 ]
@@ -34,7 +34,7 @@ set use-ip-firewall=yes
 :beep frequency=700 length=100ms
 
 /interface/ethernet
-set [ find default-name=ether1 ] comment="NN:$nodenumber"
+set [ find default-name=ether1 ] comment="NN:$networknumber"
 set [ find default-name=ether2 ] poe-out=off
 set [ find default-name=ether3 ] poe-out=off
 set [ find default-name=ether4 ] poe-out=off
@@ -48,7 +48,7 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
 :beep frequency=800 length=100ms
 
 /interface/wireless
-set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
+set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $networknumber . "-omni") radio-name=("nycmesh-" . $networknumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
 add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
 add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
@@ -156,7 +156,7 @@ set pptp disabled=yes
 
 :beep frequency=1800 length=100ms
 
-/system identity set name=("nycmesh-" . $nodenumber . "-omni")
+/system identity set name=("nycmesh-" . $networknumber . "-omni")
 
 # Set up syslog reporting
 /system logging action add name=rsyslog remote=10.70.90.56 target=remote
