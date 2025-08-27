@@ -22,7 +22,7 @@
 :foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
 
 /interface bridge
-add auto-mac=yes name=mesh fast-forward=no protocol-mode=none name=("nycmesh-" . $nodenumber . "-core")
+add auto-mac=yes name=mesh fast-forward=no protocol-mode=none comment=("nycmesh-" . $nodenumber . "-core")
 add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
 /interface bridge settings
