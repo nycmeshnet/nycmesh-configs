@@ -14,8 +14,8 @@
 :global firstip ($subnet+1)
 :global lastip ($subnet + (~($subnet|$netmask)) - 1)
 :global dhcprange (($firstip+5) . "-" . ($lastip-5))
-:global meship ("10.69." . $ipthirdoctet . "." . (100 + $ipfourthoctet))
-:global wdsip ("10.68." . $ipthirdoctet . "." . (100 + $ipfourthoctet))
+:global meship ("10.69." . $ipthirdoctet . "." . $ipfourthoctet)
+:global wdsip ("10.68." . $ipthirdoctet . "." . $ipfourthoctet)
 
 /delay 2
 
