@@ -26,21 +26,9 @@ set [ find default-name=ether3 ] poe-out=off
 set [ find default-name=ether4 ] poe-out=forced-on comment="antenna to hub"
 set [ find default-name=ether5 ] poe-out=forced-on comment="sxt or other core router"
 
-/interface vlan 
-add comment="wlan passthrough" interface=ether5 name=ether5.28 vlan-id=28
-add comment="wds passthrough" interface=ether5 name=ether5.29 vlan-id=29
 
-/interface wireless security-profiles add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=dynamic-keys name=nycmeshnet supplicant-identity=nycmesh wpa-pre-shared-key=nycmeshnet wpa2-pre-shared-key=nycmeshnet
 
 :beep frequency=800 length=100ms
-
-/interface wireless set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
-/interface wireless add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
-/interface wireless add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
-/interface wireless add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
-
-/interface wireless connect-list add allow-signal-out-of-range=5m interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
-/interface wireless connect-list add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
 
 :beep frequency=900 length=100ms
 
@@ -61,8 +49,6 @@ add bridge=wlan interface=wlan2
 add bridge=wlan interface=wlan4
 add bridge=wds interface=wlan3
 add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
-add bridge=wlan interface=ether5.28
-add bridge=wds interface=ether5.29
 
 :beep frequency=1200 length=100ms
 
@@ -87,13 +73,6 @@ set 1 forwarding-override=ether5
 set 2 forwarding-override=ether5
 set 3 forwarding-override=ether5
 
-/interface bridge filter
-add action=drop chain=forward in-interface=wlan2
-add action=drop chain=forward in-interface-list=dynamic out-interface=\
-    !ether5.29
-add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
-    dynamic
-
 :beep frequency=1400 length=100ms
 
 /ip dns set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
@@ -117,6 +96,35 @@ add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
 /tool graphing resource add
 
 /delay 2
+
+/interface vlan 
+add comment="wlan passthrough" interface=ether5 name=ether5.28 vlan-id=28
+add comment="wds passthrough" interface=ether5 name=ether5.29 vlan-id=29
+
+/interface bridge port
+add bridge=wlan interface=ether5.28
+add bridge=wds interface=ether5.29
+
+/interface bridge filter
+add action=drop chain=forward in-interface-list=dynamic out-interface=\
+    !ether5.29
+add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
+    dynamic
+add action=drop chain=forward in-interface=wlan2
+
+/interface wireless set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
+/interface wireless add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
+/interface wireless add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
+/interface wireless add comment="uses nycmesh-xxxx-omni via mesh bridge" disabled=yes master-interface=wlan1 mode=station-bridge name=wlan4 security-profile=nycmeshnet ssid=nycmesh-xxxx-omni wds-default-bridge=mesh
+
+/interface wireless connect-list add allow-signal-out-of-range=5m interface=wlan3 security-profile=nycmeshnet signal-range=-65..120
+/interface wireless connect-list add connect=no interface=wlan3 security-profile=nycmeshnet signal-range=-120..-65
+
+/interface bridge port
+add bridge=wlan interface=wlan1
+add bridge=wlan interface=wlan2
+add bridge=wlan interface=wlan4
+add bridge=wds interface=wlan3
 
 
 :beep frequency=220 length=200ms;
