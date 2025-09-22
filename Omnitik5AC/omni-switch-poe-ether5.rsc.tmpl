@@ -44,10 +44,6 @@ add bridge=mesh hw=yes interface=ether2
 add bridge=mesh hw=yes interface=ether3
 add bridge=mesh hw=yes interface=ether4
 add bridge=mesh hw=yes interface=ether5
-add bridge=wlan interface=wlan1
-add bridge=wlan interface=wlan2
-add bridge=wlan interface=wlan4
-add bridge=wds interface=wlan3
 add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
 :beep frequency=1200 length=100ms
@@ -105,13 +101,6 @@ add comment="wds passthrough" interface=ether5 name=ether5.29 vlan-id=29
 add bridge=wlan interface=ether5.28
 add bridge=wds interface=ether5.29
 
-/interface bridge filter
-add action=drop chain=forward in-interface-list=dynamic out-interface=\
-    !ether5.29
-add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
-    dynamic
-add action=drop chain=forward in-interface=wlan2
-
 /interface wireless set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=ap-bridge security-profile=nycmeshnet ssid=("nycmesh-" . $nodenumber . "-omni") radio-name=("nycmesh-" . $nodenumber . "-omni")  wireless-protocol=802.11 wps-mode=disabled rx-chains=0,1 tx-chains=0,1 default-forwarding=no
 /interface wireless add disabled=no master-interface=wlan1 name=wlan2 ssid="-NYC Mesh Community WiFi-" wps-mode=disabled
 /interface wireless add disabled=no master-interface=wlan1 name=wlan3 ssid="nycmesh-wds" wds-default-bridge=wds wds-mode=dynamic-mesh wps-mode=disabled security-profile=nycmeshnet
@@ -126,6 +115,12 @@ add bridge=wlan interface=wlan2
 add bridge=wlan interface=wlan4
 add bridge=wds interface=wlan3
 
+/interface bridge filter
+add action=drop chain=forward in-interface-list=dynamic out-interface=\
+    !ether5.29
+add action=drop chain=forward in-interface=!ether5.29 out-interface-list=\
+    dynamic
+add action=drop chain=forward in-interface=wlan2
 
 :beep frequency=220 length=200ms;
 :delay 200ms;
