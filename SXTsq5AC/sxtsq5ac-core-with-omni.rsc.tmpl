@@ -31,10 +31,6 @@ set use-ip-firewall=yes
 /interface ethernet
 set [ find default-name=ether1 ] comment="Trunk"
 
-/interface vlan
-add comment="          wlan bridge" interface=ether1 name=ether1.28 vlan-id=28
-add comment="          wds bridge" interface=ether1 name=ether1.29 vlan-id=29
-
 /interface wireless security-profiles
 add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
     dynamic-keys name=nycmeshnet supplicant-identity=nycmesh \
@@ -51,8 +47,6 @@ add address=($wdsip . "/16") interface=wds
 /interface bridge port
 add bridge=mesh hw=no interface=ether1
 add bridge=mesh interface=wlan1
-add bridge=mesh interface=ether1.28
-add bridge=wds interface=ether1.29
 
 /interface bridge filter
 add action=drop chain=forward in-bridge=mesh
@@ -110,3 +104,11 @@ set sctp disabled=yes
 
 /tool graphing interface add
 /tool graphing resource add
+
+/interface vlan
+add comment="          wlan bridge" interface=ether1 name=ether1.28 vlan-id=28
+add comment="          wds bridge" interface=ether1 name=ether1.29 vlan-id=29
+
+/interface bridge port
+add bridge=mesh interface=ether1.28
+add bridge=wds interface=ether1.29
