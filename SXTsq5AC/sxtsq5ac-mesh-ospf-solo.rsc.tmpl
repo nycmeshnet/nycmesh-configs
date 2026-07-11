@@ -15,7 +15,6 @@
 :global lastip ($subnet + (~($subnet|$netmask)) - 1)
 :global dhcprange (($firstip+5) . "-" . ($lastip-5))
 :global meship ("10.69." . $ipthirdoctet . "." . $ipfourthoctet)
-:global wdsip ("10.68." . $ipthirdoctet . "." . $ipfourthoctet)
 
 /delay 15
 
@@ -23,9 +22,7 @@
 :foreach x in=[/interface wireless find] do={ /interface wireless reset-configuration $x }
 
 /interface bridge
-add auto-mac=yes name=local fast-forward=no 
 add auto-mac=yes name=mesh fast-forward=no protocol-mode=none
-add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 
 /interface bridge settings
 set use-ip-firewall=yes
@@ -38,29 +35,22 @@ add authentication-types=wpa-psk,wpa2-psk management-protection=allowed mode=\
 /interface wireless
 set [ find default-name=wlan1 ] band=5ghz-a/n/ac channel-width=20/40/80mhz-Ceee country="united states3" disabled=no distance=dynamic antenna-gain=0 installation=any frequency=5180 mode=station-bridge security-profile=nycmeshnet wireless-protocol=802.11 wps-mode=disabled ssid="nycmesh-{{targetnn}}-omni" radio-name=("nycmesh-" . $nodenumber . "-sxt") comment="uses nycmesh-{{targetnn}}-omni via mesh bridge"
 
-/interface wireless connect-list
-add allow-signal-out-of-range=5m disabled=yes interface=wlan1 security-profile=nycmeshnet signal-range=-75..120
-add connect=no disabled=yes interface=wlan1 security-profile=nycmeshnet signal-range=-120..-75
-
 /ip address
-add address=($firstip . "/" . $cidrright) interface=local
+add address=($firstip . "/" . $cidrright) interface=mesh
 add address=($meship . "/16") interface=mesh
-add address=($wdsip . "/16") interface=wds
 
 /interface bridge port
-add bridge=local interface=ether1
+add bridge=mesh interface=ether1 hw=no
 add bridge=mesh interface=wlan1
-add bridge=wds interface=dynamic internal-path-cost=100 path-cost=100
 
 /interface bridge filter
 add action=drop chain=forward in-bridge=mesh
-add action=drop chain=forward in-bridge=wds
 
 /ip pool
 add name=local ranges=$dhcprange
 
 /ip dhcp-server
-add address-pool=local disabled=no interface=local name=localdhcp
+add address-pool=local disabled=no interface=mesh name=localdhcp
 
 /ip dhcp-server network
 add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
@@ -69,11 +59,8 @@ add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netma
 set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
 
 /routing ospf instance set [ find default=yes ] router-id=$meship redistribute-connected=as-type-1
-/routing filter add chain="ospf-in" set-bgp-communities=65000:110 set-distance=205
 /routing ospf interface add interface=mesh network-type=ptmp
-/routing ospf interface add interface=wds network-type=ptmp cost=30
 /routing ospf network add area=backbone network=10.69.0.0/16
-/routing ospf network add area=backbone network=10.68.0.0/16
 
 /ip firewall address-list
 add address=10.0.0.0/8 list=meshaddr
