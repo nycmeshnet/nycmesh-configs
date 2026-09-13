@@ -122,7 +122,7 @@ add address=199.170.132.0/24 list=meshaddr
 add address=23.158.16.0/24 list=meshaddr
 
 /ip firewall filter
-add action=accept chain=input comment="Accept traffic from mesh public and private IPs" src-address-list=meshaddr
+add action=accept chain=input comment="Accept traffic from mesh public and private IPs not on WLAN2" in-bridge-port=!wlan2 src-address-list=meshaddr
 add action=accept chain=input comment="Accept any ping" protocol=icmp
 add action=accept chain=input comment="Accept any DNS" dst-port=53 protocol=udp src-address-list=meshaddr
 add action=accept chain=input comment="Accept any in-progress established or related connection" connection-state=established,related
