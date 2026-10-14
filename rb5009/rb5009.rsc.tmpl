@@ -1,6 +1,7 @@
 # NYC Mesh Mikrotik RB5009 Router config
 # RB5009UG+S+IN / RB5009UPr+S+IN / RB5009UPr+S+OUT
 # THIS CONFIG ASSUMES AN OMNI SWITCH ON THE ROOF ON ETHER8. IF NOT NEEDED, REMOVE VLANS.
+# IF THIS IS A POE OUT MODEL, YOU NEED TO SET FORCED-ON ON THE APPROPRIATE PORTS
 :global nodenumber {{nodenumber}}
 
 :global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
@@ -27,7 +28,7 @@ add auto-mac=yes name=wds fast-forward=no protocol-mode=none
 set use-ip-firewall=yes
 
 /interface ethernet
-set [ find default-name=ether8 ] comment="Omni on roof" poe-out=forced-on
+set [ find default-name=ether8 ] comment="Omni on roof"
 
 /ip address
 add address=($firstip . "/" . $cidrright) interface=mesh
