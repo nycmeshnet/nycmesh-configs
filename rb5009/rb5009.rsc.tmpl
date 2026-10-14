@@ -180,7 +180,7 @@ add dont-require-permissions=no name=exstart_repair owner=admin policy=\
     \n}"
 
 /system scheduler
-add !days interval=30s name=exstart_check on-event=exstart_repair policy=\
+add interval=30s name=exstart_check on-event=exstart_repair policy=\
     ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon
 
 /system logging
