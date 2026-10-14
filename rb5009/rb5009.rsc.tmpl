@@ -1,0 +1,186 @@
+# NYC Mesh Mikrotik RB5009 Router config
+# RB5009UG+S+IN / RB5009UPr+S+IN / RB5009UPr+S+OUT
+# THIS CONFIG ASSUMES AN OMNI SWITCH ON THE ROOF ON ETHER8. IF NOT NEEDED, REMOVE VLANS.
+:global nodenumber {{nodenumber}}
+
+:global cidr ("10." . ((96+(nodenumber>>10))+0) . "." . (((nodenumber>>2)&255)+0) . "." . (((nodenumber&3)<<6)+0) . "/26")
+:global ipthirdoctet ( [ :pick $nodenumber ([:len $nodenumber] - 5) ([:len $nodenumber] - 2) ] + 0 )
+:global ipfourthoctet ( [ :pick $nodenumber ([:len $nodenumber] - 2) ([:len $nodenumber]) ] + 0 )
+
+:global cidrleft [ :pick $cidr 0 ( [ :find $cidr "/" ] ) ]
+:global cidrright [ :pick $cidr (( [ :find $cidr "/" ] )+1) 100 ]
+:global netmask (255.255.255.255<<(32-$cidrright))
+:global subnet ($cidrleft&$netmask)
+:global firstip ($subnet+1)
+:global lastip ($subnet + (~($subnet|$netmask)) - 1)
+:global dhcprange (($firstip+5) . "-" . ($lastip-5))
+:global meship ("10.69." . $ipthirdoctet . "." . $ipfourthoctet)
+:global wdsip ("10.68." . $ipthirdoctet . "." . $ipfourthoctet)
+
+/delay 2
+
+/interface bridge
+add auto-mac=yes name=mesh fast-forward=no protocol-mode=none comment=("nycmesh-" . $nodenumber . "-core")
+add auto-mac=yes name=wds fast-forward=no protocol-mode=none
+
+/interface bridge settings
+set use-ip-firewall=yes
+
+/interface ethernet
+set [ find default-name=ether8 ] comment="Omni on roof" poe-out=forced-on
+
+/ip address
+add address=($firstip . "/" . $cidrright) interface=mesh
+add address=($meship . "/16") interface=mesh
+add address=($wdsip . "/16") interface=wds
+
+/interface bridge port
+add bridge=mesh hw=no interface=ether1
+add bridge=mesh hw=no interface=ether2
+add bridge=mesh hw=no interface=ether3
+add bridge=mesh hw=no interface=ether4
+add bridge=mesh hw=no interface=ether5
+add bridge=mesh hw=no interface=ether6
+add bridge=mesh hw=no interface=ether7
+add bridge=mesh hw=no interface=ether8
+add bridge=mesh hw=no interface=sfp-sfpplus1
+
+/interface bridge filter
+add action=drop chain=forward in-bridge=mesh
+add action=drop chain=forward in-bridge=wds
+
+/ip pool
+add name=local ranges=$dhcprange
+
+/ip dhcp-server
+add address-pool=local disabled=no interface=mesh name=localdhcp
+
+/ip dhcp-server network
+add address=$cidr dns-server=( "10.10.10.10," . $firstip) gateway=$firstip netmask=$cidrright
+
+/ip dns
+set allow-remote-requests=yes servers=10.10.10.10,1.1.1.1
+
+/routing id
+add disabled=no id=$meship name=mesh select-dynamic-id=""
+
+/routing ospf instance
+add disabled=no in-filter-chain=ospf-in name=default originate-default=never \
+    out-filter-chain=ospf-out redistribute=connected router-id=$meship
+
+/routing ospf area
+add disabled=no instance=default name=backbone
+
+/routing bfd configuration
+add disabled=no interfaces=all min-rx=200ms min-tx=200ms multiplier=5
+
+/routing filter rule
+add chain=ospf-in disabled=no rule=accept
+add chain=ospf-out disabled=no rule="if (dst == 10.69.0.0/16) {\
+    \n  reject\
+    \n}"
+add chain=ospf-out disabled=no rule=accept
+
+/routing ospf interface-template
+add area=backbone cost=10 disabled=no interfaces=mesh \
+    networks=10.69.0.0/16 priority=1 type=ptmp-broadcast use-bfd=no
+add area=backbone comment=wds cost=100 disabled=no interfaces=wds networks=\
+    10.68.0.0/16 priority=1 type=ptmp-broadcast use-bfd=no
+
+/ip firewall address-list
+add address=10.0.0.0/8 list=meshaddr
+add address=199.167.59.0/24 list=meshaddr
+add address=199.170.132.0/24 list=meshaddr
+add address=23.158.16.0/24 list=meshaddr
+add address=208.68.5.0/24 list=meshaddr
+
+/ip firewall filter
+add action=accept chain=input protocol=icmp
+add action=accept chain=input dst-port=53 protocol=udp
+add action=accept chain=input connection-state=established,related
+add action=accept chain=input src-address-list=meshaddr
+add action=drop chain=input src-address-list=!meshaddr
+
+/ip firewall service-port
+set ftp disabled=yes
+set tftp disabled=yes
+set h323 disabled=yes
+set sip disabled=yes
+set pptp disabled=yes
+
+/snmp
+set contact="NYC Mesh" enabled=yes location=NYC
+
+/system identity set name=("nycmesh-" . $nodenumber . "-core")
+
+/system clock set time-zone-name=America/New_York time-zone-autodetect=no
+
+/system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+
+/tool graphing interface add
+/tool graphing resource add
+
+/interface vlan
+add comment="wlan bridge" interface=ether1 name=ether8.28 vlan-id=28
+add comment="wds bridge" interface=ether1 name=ether8.29 vlan-id=29
+
+/interface bridge port
+add bridge=mesh interface=ether8.28
+add bridge=wds interface=ether8.29
+
+/system script
+add dont-require-permissions=no name=exstart_repair owner=admin policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source="#\
+    \_exstart_repair\
+    \n# reestablish OSPF links stuck in ExStart\
+    \n#\
+    \n# marg's updates to daniel's script\
+    \n\
+    \n:local debug \"\";\
+    \n#:set debug \"_debug\"; #uncomment this line to turn on debugging\
+    \n\
+    \n:local scriptName \"exstart_repair\$debug\";\
+    \n:local neighborNum \"\";\
+    \n:local badNeighbor \"\";\
+    \n\
+    \ndo {\
+    \n  do {\
+    \n    :set neighborNum [:pick [/routing/ospf/neighbor/find state=\"ExStart\
+    \"] 0 1];\
+    \n  } on-error { :log warning \"\$scriptName: no matches\"; }\
+    \n    \
+    \n\
+    \n  :set badNeighbor \\\
+    \n    [/routing/ospf/neighbor/get number=\$neighborNum value-name=address]\
+    ; # find neighbors in a bad way\
+    \n  :log warning \"\$scriptName: Bad Neighbor Found: \$badNeighbor\";\
+    \n\
+    \n  do {\
+    \n    /routing/filter/rule/add chain=ospf-in place-before=0 rule=\"if (dst\
+    \_== \$badNeighbor/32) { reject }\";\
+    \n    :log warning \"\$scriptName: Rejecting Bad Neighbor \$badNeighbor fo\
+    r 5 seconds\";\
+    \n  } on-error { :log error \"\$scriptName: could not add reject rule\" };\
+    \_# add a rule to reject neighbor\
+    \n\
+    \n  :delay 5000ms; # wait 5 seconds\
+    \n\
+    \n  do {\
+    \n    /routing/filter/rule/remove [find chain=ospf-in rule=\"if (dst == \$\
+    badNeighbor/32) { reject }\"];\
+    \n    :log warning \"\$scriptName: Allowing Bad Neighbor \$badNeighbor to \
+    establish adjacency\";\
+    \n  } on-error { :log error \"\$scriptName: could not remove reject rule\"\
+    \_}; # remove rule so it can try again\
+    \n\
+    \n} on-error {\
+    \n  :if (\$debug != \"\") do={:log info \"\$scriptName: nothing to do\";};\
+    \_# do not set \$debug to stop spamming log\
+    \n}"
+
+/system scheduler
+add !days interval=30s name=exstart_check on-event=exstart_repair policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon
+
+/system logging
+add action=rsyslog topics=!dhcp,!debug,!packet,!dns,!snmp,!route,!account
