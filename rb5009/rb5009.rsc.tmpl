@@ -121,8 +121,8 @@ set contact="NYC Mesh" enabled=yes location=NYC
 /tool graphing resource add
 
 /interface vlan
-add comment="wlan bridge" interface=ether1 name=ether8.28 vlan-id=28
-add comment="wds bridge" interface=ether1 name=ether8.29 vlan-id=29
+add comment="wlan bridge" interface=ether8 name=ether8.28 vlan-id=28
+add comment="wds bridge" interface=ether8 name=ether8.29 vlan-id=29
 
 /interface bridge port
 add bridge=mesh interface=ether8.28
