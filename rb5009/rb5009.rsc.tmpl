@@ -116,7 +116,11 @@ set contact="NYC Mesh" enabled=yes location=NYC
 
 /system clock set time-zone-name=America/New_York time-zone-autodetect=no
 
-/system ntp client set enabled=yes primary-ntp=10.10.10.123 server-dns-names=0.pool.ntp.org
+/system ntp client
+set enabled=yes
+
+/system ntp client servers
+add address=10.10.10.123
 
 /tool graphing interface add
 /tool graphing resource add
@@ -182,6 +186,3 @@ add dont-require-permissions=no name=exstart_repair owner=admin policy=\
 /system scheduler
 add interval=30s name=exstart_check on-event=exstart_repair policy=\
     ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon
-
-/system logging
-add action=rsyslog topics=!dhcp,!debug,!packet,!dns,!snmp,!route,!account
